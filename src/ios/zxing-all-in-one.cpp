@@ -7848,14 +7848,14 @@ namespace zxing {
       if (hints.containsFormat(BarcodeFormat_EAN_8)) {
         readers.push_back(Ref<OneDReader>(new EAN8Reader()));
       }
-      if (hints.containsFormat(BarcodeFormat_UPC_E)) {
-        readers.push_back(Ref<OneDReader>(new UPCEReader()));
-      }
+      //if (hints.containsFormat(BarcodeFormat_UPC_E)) {
+      //  readers.push_back(Ref<OneDReader>(new UPCEReader()));
+      //}
       if (readers.size() == 0) {
         readers.push_back(Ref<OneDReader>(new EAN13Reader()));
         // UPC-A is covered by EAN-13
         readers.push_back(Ref<OneDReader>(new EAN8Reader()));
-        readers.push_back(Ref<OneDReader>(new UPCEReader()));
+        //readers.push_back(Ref<OneDReader>(new UPCEReader()));
       }
     }
 
