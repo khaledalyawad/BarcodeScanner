@@ -7771,10 +7771,7 @@ namespace zxing {
 namespace zxing {
   namespace oned {
     MultiFormatOneDReader::MultiFormatOneDReader(DecodeHints hints) : readers() {
-      if (hints.containsFormat(BarcodeFormat_EAN_13) ||
-          hints.containsFormat(BarcodeFormat_EAN_8) ||
-          hints.containsFormat(BarcodeFormat_UPC_A) ||
-          hints.containsFormat(BarcodeFormat_UPC_E)) {
+      if (hints.containsFormat(BarcodeFormat_UPC_A)  ) {
         readers.push_back(Ref<OneDReader>(new MultiFormatUPCEANReader(hints)));
       }
       if (hints.containsFormat(BarcodeFormat_CODE_39)) {
