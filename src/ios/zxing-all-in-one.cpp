@@ -178,19 +178,30 @@ namespace zxing {
 const DecodeHintType DecodeHints::CHARACTER_SET;
 
 const DecodeHints DecodeHints::PRODUCT_HINT(
-
-    BARCODEFORMAT_UPC_A_HINT 
-);
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
+    BARCODEFORMAT_EAN_13_HINT);
 
 const DecodeHints DecodeHints::ONED_HINT(
- 
-    BARCODEFORMAT_UPC_A_HINT 
-);
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
+    BARCODEFORMAT_EAN_13_HINT |
+    BARCODEFORMAT_CODE_128_HINT |
+    BARCODEFORMAT_CODE_39_HINT |
+    BARCODEFORMAT_ITF_HINT);
 
 const DecodeHints DecodeHints::DEFAULT_HINT(
- 
-    BARCODEFORMAT_UPC_A_HINT 
-);
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
+    BARCODEFORMAT_EAN_13_HINT |
+    BARCODEFORMAT_CODE_128_HINT |
+    BARCODEFORMAT_CODE_39_HINT |
+    BARCODEFORMAT_ITF_HINT |
+    BARCODEFORMAT_DATA_MATRIX_HINT |
+    BARCODEFORMAT_QR_CODE_HINT);
 
 DecodeHints::DecodeHints() {
   hints = 0;
@@ -206,7 +217,11 @@ void DecodeHints::addFormat(BarcodeFormat toadd) {
     case BarcodeFormat_DATA_MATRIX: hints |= BARCODEFORMAT_DATA_MATRIX_HINT; break;
     case BarcodeFormat_UPC_E: hints |= BARCODEFORMAT_UPC_E_HINT; break;
     case BarcodeFormat_UPC_A: hints |= BARCODEFORMAT_UPC_A_HINT; break;
-
+    case BarcodeFormat_EAN_8: hints |= BARCODEFORMAT_EAN_8_HINT; break;
+    case BarcodeFormat_EAN_13: hints |= BARCODEFORMAT_EAN_13_HINT; break;
+    case BarcodeFormat_CODE_128: hints |= BARCODEFORMAT_CODE_128_HINT; break;
+    case BarcodeFormat_CODE_39: hints |= BARCODEFORMAT_CODE_39_HINT; break;
+    case BarcodeFormat_ITF: hints |= BARCODEFORMAT_ITF_HINT; break;
     default: throw IllegalArgumentException("Unrecognizd barcode format");
   }
 }
@@ -7761,7 +7776,10 @@ namespace zxing {
 namespace zxing {
   namespace oned {
     MultiFormatOneDReader::MultiFormatOneDReader(DecodeHints hints) : readers() {
-      if (hints.containsFormat(BarcodeFormat_UPC_A) ) {
+      if (hints.containsFormat(BarcodeFormat_EAN_13) ||
+          hints.containsFormat(BarcodeFormat_EAN_8) ||
+          hints.containsFormat(BarcodeFormat_UPC_A) ||
+          hints.containsFormat(BarcodeFormat_UPC_E)) {
         readers.push_back(Ref<OneDReader>(new MultiFormatUPCEANReader(hints)));
       }
       if (hints.containsFormat(BarcodeFormat_CODE_39)) {
