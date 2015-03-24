@@ -7774,21 +7774,7 @@ namespace zxing {
       if (hints.containsFormat(BarcodeFormat_UPC_A)  ) {
         readers.push_back(Ref<OneDReader>(new MultiFormatUPCEANReader(hints)));
       }
-      if (hints.containsFormat(BarcodeFormat_CODE_39)) {
-        readers.push_back(Ref<OneDReader>(new Code39Reader()));
-      }
-      if (hints.containsFormat(BarcodeFormat_CODE_128)) {
-        readers.push_back(Ref<OneDReader>(new Code128Reader()));
-      }
-      if (hints.containsFormat(BarcodeFormat_ITF)) {
-        readers.push_back(Ref<OneDReader>(new ITFReader()));
-      }
-      if (readers.size() == 0) {
-        readers.push_back(Ref<OneDReader>(new MultiFormatUPCEANReader(hints)));
-        readers.push_back(Ref<OneDReader>(new Code39Reader()));
-        readers.push_back(Ref<OneDReader>(new Code128Reader()));
-        readers.push_back(Ref<OneDReader>(new ITFReader()));
-      }
+
     }
 
     Ref<Result> MultiFormatOneDReader::decodeRow(int rowNumber, Ref<BitArray> row) {
@@ -7840,23 +7826,15 @@ namespace zxing {
   namespace oned {
 
     MultiFormatUPCEANReader::MultiFormatUPCEANReader(DecodeHints hints) : readers() {
-      if (hints.containsFormat(BarcodeFormat_EAN_13)) {
-        readers.push_back(Ref<OneDReader>(new EAN13Reader()));
-      } else if (hints.containsFormat(BarcodeFormat_UPC_A)) {
+ 
+      if (hints.containsFormat(BarcodeFormat_UPC_A)) {
         readers.push_back(Ref<OneDReader>(new UPCAReader()));
       }
-      if (hints.containsFormat(BarcodeFormat_EAN_8)) {
-        readers.push_back(Ref<OneDReader>(new EAN8Reader()));
-      }
+
       //if (hints.containsFormat(BarcodeFormat_UPC_E)) {
       //  readers.push_back(Ref<OneDReader>(new UPCEReader()));
       //}
-      if (readers.size() == 0) {
-        readers.push_back(Ref<OneDReader>(new EAN13Reader()));
-        // UPC-A is covered by EAN-13
-        readers.push_back(Ref<OneDReader>(new EAN8Reader()));
-        //readers.push_back(Ref<OneDReader>(new UPCEReader()));
-      }
+
     }
 
     Ref<Result> MultiFormatUPCEANReader::decodeRow(int rowNumber, Ref<BitArray> row) {
