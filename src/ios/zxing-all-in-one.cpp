@@ -202,7 +202,9 @@ DecodeHints::DecodeHints(DecodeHintType init) {
 
 void DecodeHints::addFormat(BarcodeFormat toadd) {
   switch (toadd) {
-
+    case BarcodeFormat_QR_CODE: hints |= BARCODEFORMAT_QR_CODE_HINT; break;
+    case BarcodeFormat_DATA_MATRIX: hints |= BARCODEFORMAT_DATA_MATRIX_HINT; break;
+    case BarcodeFormat_UPC_E: hints |= BARCODEFORMAT_UPC_E_HINT; break;
     case BarcodeFormat_UPC_A: hints |= BARCODEFORMAT_UPC_A_HINT; break;
 
     default: throw IllegalArgumentException("Unrecognizd barcode format");
@@ -212,9 +214,15 @@ void DecodeHints::addFormat(BarcodeFormat toadd) {
 bool DecodeHints::containsFormat(BarcodeFormat tocheck) const {
   DecodeHintType checkAgainst;
   switch (tocheck) {
-
+    case BarcodeFormat_QR_CODE: checkAgainst = BARCODEFORMAT_QR_CODE_HINT; break;
+    case BarcodeFormat_DATA_MATRIX: checkAgainst = BARCODEFORMAT_DATA_MATRIX_HINT; break;
+    case BarcodeFormat_UPC_E: checkAgainst = BARCODEFORMAT_UPC_E_HINT; break;
     case BarcodeFormat_UPC_A: checkAgainst = BARCODEFORMAT_UPC_A_HINT; break;
-
+    case BarcodeFormat_EAN_8: checkAgainst = BARCODEFORMAT_EAN_8_HINT; break;
+    case BarcodeFormat_EAN_13: checkAgainst = BARCODEFORMAT_EAN_13_HINT; break;
+    case BarcodeFormat_CODE_128: checkAgainst = BARCODEFORMAT_CODE_128_HINT; break;
+    case BarcodeFormat_CODE_39: checkAgainst = BARCODEFORMAT_CODE_39_HINT; break;
+    case BarcodeFormat_ITF: checkAgainst = BARCODEFORMAT_ITF_HINT; break;
     default: throw IllegalArgumentException("Unrecognizd barcode format");
   }
   return (hints & checkAgainst);
