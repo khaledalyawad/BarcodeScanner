@@ -112,7 +112,7 @@ namespace zxing {
 	BinaryBitmap::~BinaryBitmap() {
 	}
 
-	Ref<BitArray> BinaryBitmap::getBlackRow(long y, Ref<BitArray> row) {
+	Ref<BitArray> BinaryBitmap::getBlackRow(int y, Ref<BitArray> row) {
 		return binarizer_->getBlackRow(y, row);
 	}
 
@@ -120,11 +120,11 @@ namespace zxing {
 		return binarizer_->getBlackMatrix();
 	}
 
-	long BinaryBitmap::getWidth() const {
+	int BinaryBitmap::getWidth() const {
 		return getLuminanceSource()->getWidth();
 	}
 
-	long BinaryBitmap::getHeight() const {
+	int BinaryBitmap::getHeight() const {
 		return getLuminanceSource()->getHeight();
 	}
 
@@ -137,7 +137,7 @@ namespace zxing {
 	  return getLuminanceSource()->isCropSupported();
 	}
 
-	Ref<BinaryBitmap> BinaryBitmap::crop(long left, long top, long width, long height) {
+	Ref<BinaryBitmap> BinaryBitmap::crop(int left, int top, int width, int height) {
 	  return Ref<BinaryBitmap> (new BinaryBitmap(binarizer_->createBinarizer(getLuminanceSource()->crop(left, top, width, height))));
 	}
 
@@ -178,29 +178,29 @@ namespace zxing {
 const DecodeHintType DecodeHints::CHARACTER_SET;
 
 const DecodeHints DecodeHints::PRODUCT_HINT(
-    BARCODEFORMAT_UPC_E_Hlong |
-    BARCODEFORMAT_UPC_A_Hlong |
-    BARCODEFORMAT_EAN_8_Hlong |
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
     BARCODEFORMAT_EAN_13_HINT);
 
 const DecodeHints DecodeHints::ONED_HINT(
-    BARCODEFORMAT_UPC_E_Hlong |
-    BARCODEFORMAT_UPC_A_Hlong |
-    BARCODEFORMAT_EAN_8_Hlong |
-    BARCODEFORMAT_EAN_13_Hlong |
-    BARCODEFORMAT_CODE_128_Hlong |
-    BARCODEFORMAT_CODE_39_Hlong |
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
+    BARCODEFORMAT_EAN_13_HINT |
+    BARCODEFORMAT_CODE_128_HINT |
+    BARCODEFORMAT_CODE_39_HINT |
     BARCODEFORMAT_ITF_HINT);
 
 const DecodeHints DecodeHints::DEFAULT_HINT(
-    BARCODEFORMAT_UPC_E_Hlong |
-    BARCODEFORMAT_UPC_A_Hlong |
-    BARCODEFORMAT_EAN_8_Hlong |
-    BARCODEFORMAT_EAN_13_Hlong |
-    BARCODEFORMAT_CODE_128_Hlong |
-    BARCODEFORMAT_CODE_39_Hlong |
-    BARCODEFORMAT_ITF_Hlong |
-    BARCODEFORMAT_DATA_MATRIX_Hlong |
+    BARCODEFORMAT_UPC_E_HINT |
+    BARCODEFORMAT_UPC_A_HINT |
+    BARCODEFORMAT_EAN_8_HINT |
+    BARCODEFORMAT_EAN_13_HINT |
+    BARCODEFORMAT_CODE_128_HINT |
+    BARCODEFORMAT_CODE_39_HINT |
+    BARCODEFORMAT_ITF_HINT |
+    BARCODEFORMAT_DATA_MATRIX_HINT |
     BARCODEFORMAT_QR_CODE_HINT);
 
 DecodeHints::DecodeHints() {
@@ -384,7 +384,7 @@ bool LuminanceSource::isCropSupported() const {
   return false;
 }
 
-Ref<LuminanceSource> LuminanceSource::crop(long left, long top, long width, long height) {
+Ref<LuminanceSource> LuminanceSource::crop(int left, int top, int width, int height) {
   (void)left;
   (void)top;
   (void)width;
@@ -403,10 +403,10 @@ Ref<LuminanceSource> LuminanceSource::rotateCounterClockwise() {
 LuminanceSource::operator std::string() {
   unsigned char* row = 0;
   std::ostringstream oss;
-  for (long y = 0; y < getHeight(); y++) {
+  for (int y = 0; y < getHeight(); y++) {
     row = getRow(y, row);
-    for (long x = 0; x < getWidth(); x++) {
-      long luminance = row[x] & 0xFF;
+    for (int x = 0; x < getWidth(); x++) {
+      int luminance = row[x] & 0xFF;
       char c;
       if (luminance < 0x40) {
         c = '#';
@@ -514,7 +514,7 @@ namespace zxing {
   }
 
   Ref<Result> MultiFormatReader::decodeInternal(Ref<BinaryBitmap> image) {
-    for (unsigned long i = 0; i < readers_.size(); i++) {
+    for (unsigned int i = 0; i < readers_.size(); i++) {
       try {
         return readers_[i]->decode(image, hints_);
       } catch (ReaderException const& re) {
@@ -883,7 +883,7 @@ namespace zxing {
 
 
 size_t BitArray::wordsForBits(size_t bits) {
-  long arraySize = (bits + bitsPerWord_ - 1) >> logBits_;
+  int arraySize = (bits + bitsPerWord_ - 1) >> logBits_;
   return arraySize;
 }
 
@@ -898,11 +898,11 @@ size_t BitArray::getSize() {
   return size_;
 }
 
-void BitArray::setBulk(size_t i, unsigned long newBits) {
+void BitArray::setBulk(size_t i, unsigned int newBits) {
   bits_[i >> logBits_] = newBits;
 }
 
-void BitArray::setRange(long start, long end) {
+void BitArray::setRange(int start, int end) {
   if (end < start) {
     throw IllegalArgumentException("invalid call to BitArray::setRange");
   }
@@ -910,17 +910,17 @@ void BitArray::setRange(long start, long end) {
     return;
   }
   end--; // will be easier to treat this as the last actually set bit -- inclusive
-  long firstlong = start >> 5;
-  long lastlong = end >> 5;
-  for (long i = firstInt; i <= lastInt; i++) {
-    long firstBit = i > firstlong ? 0 : start & 0x1F;
-    long lastBit = i < lastlong ? 31 : end & 0x1F;
-    long mask;
+  int firstInt = start >> 5;
+  int lastInt = end >> 5;
+  for (int i = firstInt; i <= lastInt; i++) {
+    int firstBit = i > firstInt ? 0 : start & 0x1F;
+    int lastBit = i < lastInt ? 31 : end & 0x1F;
+    int mask;
     if (firstBit == 0 && lastBit == 31) {
       mask = -1;
     } else {
       mask = 0;
-      for (long j = firstBit; j <= lastBit; j++) {
+      for (int j = firstBit; j <= lastBit; j++) {
         mask |= 1 << j;
       }
     }
@@ -949,7 +949,7 @@ bool BitArray::isRange(size_t start, size_t end, bool value) {
   for (size_t i = firstWord; i <= lastWord; i++) {
     size_t firstBit = i > firstWord ? 0 : start & bitsMask_;
     size_t lastBit = i < lastWord ? bitsPerWord_ - 1: end & bitsMask_;
-    unsigned long mask;
+    unsigned int mask;
     if (firstBit == 0 && lastBit == bitsPerWord_ - 1) {
       mask = numeric_limits<unsigned int>::max();
     } else {
@@ -1022,10 +1022,10 @@ using zxing::Ref;
 namespace {
   size_t wordsForSize(size_t width,
                       size_t height,
-                      unsigned long bitsPerWord,
-                      unsigned long logBits) {
+                      unsigned int bitsPerWord,
+                      unsigned int logBits) {
     size_t bits = width * height;
-    long arraySize = (bits + bitsPerWord - 1) >> logBits;
+    int arraySize = (bits + bitsPerWord - 1) >> logBits;
     return arraySize;
   }
 }
@@ -1071,7 +1071,7 @@ void BitMatrix::setRegion(size_t left, size_t top, size_t width, size_t height) 
     throw IllegalArgumentException("top + height and left + width must be <= matrix dimension");
   }
   for (size_t y = top; y < bottom; y++) {
-    long yOffset = width_ * y;
+    int yOffset = width_ * y;
     for (size_t x = left; x < right; x++) {
       size_t offset = x + yOffset;
       bits_[offset >> logBits] |= 1 << (offset & bitsMask);
@@ -1079,7 +1079,7 @@ void BitMatrix::setRegion(size_t left, size_t top, size_t width, size_t height) 
   }
 }
 
-Ref<BitArray> BitMatrix::getRow(long y, Ref<BitArray> row) {
+Ref<BitArray> BitMatrix::getRow(int y, Ref<BitArray> row) {
   if (row.empty() || row->getSize() < width_) {
     row = new BitArray(width_);
   } else {
@@ -1093,7 +1093,7 @@ Ref<BitArray> BitMatrix::getRow(long y, Ref<BitArray> row) {
   for (size_t i = firstWord; i <= lastWord; i++) {
     size_t firstBit = i > firstWord ? 0 : start & bitsMask;
     size_t lastBit = i < lastWord ? bitsPerWord - 1 : end & bitsMask;
-    unsigned long mask;
+    unsigned int mask;
     if (firstBit == 0 && lastBit == logBits) {
       mask = std::numeric_limits<unsigned int>::max();
     } else {
@@ -1104,7 +1104,7 @@ Ref<BitArray> BitMatrix::getRow(long y, Ref<BitArray> row) {
     }
     row->setBulk((i - firstWord) << logBits, (bits_[i] & mask) >> bitOffset);
     if (firstBit == 0 && bitOffset != 0) {
-      unsigned long prevBulk = row->getBitArray()[i - firstWord - 1];
+      unsigned int prevBulk = row->getBitArray()[i - firstWord - 1];
       prevBulk |= (bits_[i] & mask) << (bitsPerWord - bitOffset);
       row->setBulk((i - firstWord - 1) << logBits, prevBulk);
     }
@@ -1173,21 +1173,21 @@ const char* BitMatrix::description() {
 
 namespace zxing {
 
-long BitSource::readBits(long numBits) {
+int BitSource::readBits(int numBits) {
   if (numBits < 0 || numBits > 32) {
     throw IllegalArgumentException("cannot read <1 or >32 bits");
   } else if (numBits > available()) {
     throw IllegalArgumentException("reading more bits than are available");
   }
 
-  long result = 0;
+  int result = 0;
 
   // First, read remainder from current byte
   if (bitOffset_ > 0) {
-    long bitsLeft = 8 - bitOffset_;
-    long toRead = numBits < bitsLeft ? numBits : bitsLeft;
-    long bitsToNotRead = bitsLeft - toRead;
-    long mask = (0xFF >> (8 - toRead)) << bitsToNotRead;
+    int bitsLeft = 8 - bitOffset_;
+    int toRead = numBits < bitsLeft ? numBits : bitsLeft;
+    int bitsToNotRead = bitsLeft - toRead;
+    int mask = (0xFF >> (8 - toRead)) << bitsToNotRead;
     result = (bytes_[byteOffset_] & mask) >> bitsToNotRead;
     numBits -= toRead;
     bitOffset_ += toRead;
@@ -1208,8 +1208,8 @@ long BitSource::readBits(long numBits) {
 
     // Finally read a partial byte
     if (numBits > 0) {
-      long bitsToNotRead = 8 - numBits;
-      long mask = (0xFF >> bitsToNotRead) << bitsToNotRead;
+      int bitsToNotRead = 8 - numBits;
+      int mask = (0xFF >> bitsToNotRead) << bitsToNotRead;
       result = (result << numBits) | ((bytes_[byteOffset_] & mask) >> bitsToNotRead);
       bitOffset_ += numBits;
     }
@@ -1218,7 +1218,7 @@ long BitSource::readBits(long numBits) {
   return result;
 }
 
-long BitSource::available() {
+int BitSource::available() {
   return 8 * (bytes_.size() - byteOffset_) - bitOffset_;
 }
 }
@@ -1282,28 +1282,28 @@ bool CharacterSetECI::init_tables() {
   return true;
 }
 
-CharacterSetECI::CharacterSetECI(long value, char const* encodingName_)
+CharacterSetECI::CharacterSetECI(int value, char const* encodingName_)
   : ECI(value), encodingName(encodingName_) {}
 
 char const* CharacterSetECI::getEncodingName() {
   return encodingName;
 }
 
-void CharacterSetECI::addCharacterSet(long value, char const* encodingName) {
+void CharacterSetECI::addCharacterSet(int value, char const* encodingName) {
   CharacterSetECI* eci = new CharacterSetECI(value, encodingName);
   VALUE_TO_ECI[value] = eci; // can't use valueOf
   NAME_TO_ECI[string(encodingName)] = eci;
 }
 
-void CharacterSetECI::addCharacterSet(long value, char const* const* encodingNames) {
+void CharacterSetECI::addCharacterSet(int value, char const* const* encodingNames) {
   CharacterSetECI* eci = new CharacterSetECI(value, encodingNames[0]);
   VALUE_TO_ECI[value] = eci;
-  for (long i = 0; encodingNames[i]; i++) {
+  for (int i = 0; encodingNames[i]; i++) {
     NAME_TO_ECI[string(encodingNames[i])] = eci;
   }
 }
 
-CharacterSetECI* CharacterSetECI::getCharacterSetECIByValue(long value) {
+CharacterSetECI* CharacterSetECI::getCharacterSetECIByValue(int value) {
   if (value < 0 || value >= 900) {
     std::ostringstream oss;
     oss << "Bad ECI value: " << value;
@@ -1472,13 +1472,13 @@ Ref<PerspectiveTransform> DetectorResult::getTransform() {
 using zxing::common::ECI;
 using zxing::IllegalArgumentException;
 
-ECI::ECI(long value_) : value(value_) {}
+ECI::ECI(int value_) : value(value_) {}
 
-long ECI::getValue() const {
+int ECI::getValue() const {
   return value;
 }
 
-ECI* ECI::getECIByValue(long value) {
+ECI* ECI::getECIByValue(int value) {
   if (value < 0 || value > 999999) {
     std::ostringstream oss;
     oss << "Bad ECI value: " << value;
@@ -1521,13 +1521,13 @@ using namespace std;
 namespace zxing {
 namespace EdgeDetector {
 
-void findEdgePoints(std::vector<Point>& points, const BitMatrix& image, Polong start, Polong end, bool invert, long skip, float deviation) {
+void findEdgePoints(std::vector<Point>& points, const BitMatrix& image, Point start, Point end, bool invert, int skip, float deviation) {
   float xdist = end.x - start.x;
   float ydist = end.y - start.y;
   float length = sqrt(xdist * xdist + ydist * ydist);
 
 
-  long var;
+  int var;
 
   if (abs(xdist) > abs(ydist)) {
     // Horizontal
@@ -1538,17 +1538,17 @@ void findEdgePoints(std::vector<Point>& points, const BitMatrix& image, Polong s
 
     float dy = ydist / xdist * skip;
     bool left = (skip < 0) ^ invert;
-    long x = int(start.x);
+    int x = int(start.x);
 
-    long steps = int(xdist / skip);
-    for (long i = 0; i < steps; i++) {
+    int steps = int(xdist / skip);
+    for (int i = 0; i < steps; i++) {
       x += skip;
       if (x < 0 || x >= (int)image.getWidth())
         continue; // In case we start off the edge
-      long my = int(start.y + dy * i);
-      long ey = min(my + var + 1, (int)image.getHeight() - 1);
-      long sy = max(my - var, 0);
-      for (long y = sy + 1; y < ey; y++) {
+      int my = int(start.y + dy * i);
+      int ey = min(my + var + 1, (int)image.getHeight() - 1);
+      int sy = max(my - var, 0);
+      for (int y = sy + 1; y < ey; y++) {
         if (left) {
           if (image.get(x, y) && !image.get(x, y + 1)) {
             points.push_back(Point(x, y + 0.5f));
@@ -1569,17 +1569,17 @@ void findEdgePoints(std::vector<Point>& points, const BitMatrix& image, Polong s
 
     float dx = xdist / ydist * skip;
     bool down = (skip > 0) ^ invert;
-    long y = int(start.y);
+    int y = int(start.y);
 
-    long steps = int(ydist / skip);
-    for (long i = 0; i < steps; i++) {
+    int steps = int(ydist / skip);
+    for (int i = 0; i < steps; i++) {
       y += skip;
       if (y < 0 || y >= (int)image.getHeight())
         continue; // In case we start off the edge
-      long mx = int(start.x + dx * i);
-      long ex = min(mx + var + 1, (int)image.getWidth() - 1);
-      long sx = max(mx - var, 0);
-      for (long x = sx + 1; x < ex; x++) {
+      int mx = int(start.x + dx * i);
+      int ex = min(mx + var + 1, (int)image.getWidth() - 1);
+      int sx = max(mx - var, 0);
+      for (int x = sx + 1; x < ex; x++) {
         if (down) {
           if (image.get(x, y) && !image.get(x + 1, y)) {
             points.push_back(Point(x + 0.5f, y));
@@ -1597,17 +1597,17 @@ void findEdgePoints(std::vector<Point>& points, const BitMatrix& image, Polong s
   }
 }
 
-Line findLine(const BitMatrix& image, Line estimate, bool invert, long deviation, float threshold, long skip) {
+Line findLine(const BitMatrix& image, Line estimate, bool invert, int deviation, float threshold, int skip) {
   float t = threshold * threshold;
 
-  Polong start = estimate.start;
-  Polong end = estimate.end;
+  Point start = estimate.start;
+  Point end = estimate.end;
 
   vector<Point> edges;
   edges.clear();
   findEdgePoints(edges, image, start, end, invert, skip, deviation);
 
-  long n = edges.size();
+  int n = edges.size();
 
   float xdist = end.x - start.x;
   float ydist = end.y - start.y;
@@ -1617,7 +1617,7 @@ Line findLine(const BitMatrix& image, Line estimate, bool invert, long deviation
   float max = 0;
   Line bestLine(start, end);  // prepopulate with the given line, in case we can't find any line for some reason
 
-  for (long i = -deviation; i < deviation; i++) {
+  for (int i = -deviation; i < deviation; i++) {
     float x1, y1;
     if (horizontal) {
       y1 = start.y + i;
@@ -1627,7 +1627,7 @@ Line findLine(const BitMatrix& image, Line estimate, bool invert, long deviation
       x1 = start.x + i;
     }
 
-    for (long j = -deviation; j < deviation; j++) {
+    for (int j = -deviation; j < deviation; j++) {
       float x2, y2;
       if (horizontal) {
         y2 = end.y + j;
@@ -1643,7 +1643,7 @@ Line findLine(const BitMatrix& image, Line estimate, bool invert, long deviation
 
       float score = 0;
 
-      for(long k = 0; k < n; k++) {
+      for(int k = 0; k < n; k++) {
         const Point& edge = edges[k];
         float dist = ((x1 - edge.x) * dy - (y1 - edge.y) * dx) / length;
         // Similar to least squares method
@@ -1663,7 +1663,7 @@ Line findLine(const BitMatrix& image, Line estimate, bool invert, long deviation
   return bestLine;
 }
 
-Polong intersection(Line a, Line b) {
+Point intersection(Line a, Line b) {
   float dxa = a.start.x - a.end.x;
   float dxb = b.start.x - b.end.x;
   float dya = a.start.y - a.end.y;
@@ -1713,9 +1713,9 @@ Polong intersection(Line a, Line b) {
 namespace zxing {
 using namespace std;
 
-const long LUMINANCE_BITS_25 = 5;
-const long LUMINANCE_SHIFT_25 = 8 - LUMINANCE_BITS_25;
-const long LUMINANCE_BUCKETS_25 = 1 << LUMINANCE_BITS_25;
+const int LUMINANCE_BITS_25 = 5;
+const int LUMINANCE_SHIFT_25 = 8 - LUMINANCE_BITS_25;
+const int LUMINANCE_BUCKETS_25 = 1 << LUMINANCE_BITS_25;
 
 GlobalHistogramBinarizer::GlobalHistogramBinarizer(Ref<LuminanceSource> source) :
   Binarizer(source), cached_matrix_(NULL), cached_row_(NULL), cached_row_num_(-1) {
@@ -1726,7 +1726,7 @@ GlobalHistogramBinarizer::~GlobalHistogramBinarizer() {
 }
 
 
-Ref<BitArray> GlobalHistogramBinarizer::getBlackRow(long y, Ref<BitArray> row) {
+Ref<BitArray> GlobalHistogramBinarizer::getBlackRow(int y, Ref<BitArray> row) {
   if (y == cached_row_num_) {
     if (cached_row_ != NULL) {
       return cached_row_;
@@ -1737,7 +1737,7 @@ Ref<BitArray> GlobalHistogramBinarizer::getBlackRow(long y, Ref<BitArray> row) {
 
   vector<int> histogram(LUMINANCE_BUCKETS_25, 0);
   LuminanceSource& source = *getLuminanceSource();
-  long width = source.getWidth();
+  int width = source.getWidth();
   if (row == NULL || static_cast<int>(row->getSize()) < width) {
     row = new BitArray(width);
   } else {
@@ -1749,18 +1749,18 @@ Ref<BitArray> GlobalHistogramBinarizer::getBlackRow(long y, Ref<BitArray> row) {
   try {
     row_pixels = new unsigned char[width];
     row_pixels = source.getRow(y, row_pixels);
-    for (long x = 0; x < width; x++) {
+    for (int x = 0; x < width; x++) {
       histogram[row_pixels[x] >> LUMINANCE_SHIFT_25]++;
     }
-    long blackPolong = estimate(histogram);
+    int blackPoint = estimate(histogram);
 
     BitArray& array = *row;
-    long left = row_pixels[0];
-    long center = row_pixels[1];
-    for (long x = 1; x < width - 1; x++) {
-      long right = row_pixels[x + 1];
+    int left = row_pixels[0];
+    int center = row_pixels[1];
+    for (int x = 1; x < width - 1; x++) {
+      int right = row_pixels[x + 1];
       // A simple -1 4 -1 box filter with a weight of 2.
-      long luminance = ((center << 2) - left - right) >> 1;
+      int luminance = ((center << 2) - left - right) >> 1;
       if (luminance < blackPoint) {
         array.set(x);
       }
@@ -1788,8 +1788,8 @@ Ref<BitMatrix> GlobalHistogramBinarizer::getBlackMatrix() {
 
   // Faster than working with the reference
   LuminanceSource& source = *getLuminanceSource();
-  long width = source.getWidth();
-  long height = source.getHeight();
+  int width = source.getWidth();
+  int height = source.getHeight();
   vector<int> histogram(LUMINANCE_BUCKETS_25, 0);
 
   // Quickly calculates the histogram by sampling four rows from the image.
@@ -1797,22 +1797,22 @@ Ref<BitMatrix> GlobalHistogramBinarizer::getBlackMatrix() {
   // diagonal as we used to do.
   ArrayRef<unsigned char> ref (width);
   unsigned char* row = &ref[0];
-  for (long y = 1; y < 5; y++) {
-    long rownum = height * y / 5;
-    long right = (width << 2) / 5;
+  for (int y = 1; y < 5; y++) {
+    int rownum = height * y / 5;
+    int right = (width << 2) / 5;
     row = source.getRow(rownum, row);
-    for (long x = width / 5; x < right; x++) {
+    for (int x = width / 5; x < right; x++) {
       histogram[row[x] >> LUMINANCE_SHIFT_25]++;
     }
   }
 
-  long blackPolong = estimate(histogram);
+  int blackPoint = estimate(histogram);
 
   Ref<BitMatrix> matrix_ref(new BitMatrix(width, height));
   BitMatrix& matrix = *matrix_ref;
-  for (long y = 0; y < height; y++) {
+  for (int y = 0; y < height; y++) {
     row = source.getRow(y, row);
-    for (long x = 0; x < width; x++) {
+    for (int x = 0; x < width; x++) {
       if (row[x] < blackPoint)
         matrix.set(x, y);
     }
@@ -1823,14 +1823,14 @@ Ref<BitMatrix> GlobalHistogramBinarizer::getBlackMatrix() {
   return matrix_ref;
 }
 
-long GlobalHistogramBinarizer::estimate(vector<int> &histogram) {
-  long numBuckets = histogram.size();
-  long maxBucketCount = 0;
+int GlobalHistogramBinarizer::estimate(vector<int> &histogram) {
+  int numBuckets = histogram.size();
+  int maxBucketCount = 0;
 
   // Find tallest peak in histogram
-  long firstPeak = 0;
-  long firstPeakSize = 0;
-  for (long i = 0; i < numBuckets; i++) {
+  int firstPeak = 0;
+  int firstPeakSize = 0;
+  for (int i = 0; i < numBuckets; i++) {
     if (histogram[i] > firstPeakSize) {
       firstPeak = i;
       firstPeakSize = histogram[i];
@@ -1842,12 +1842,12 @@ long GlobalHistogramBinarizer::estimate(vector<int> &histogram) {
 
   // Find second-tallest peak -- well, another peak that is tall and not
   // so close to the first one
-  long secondPeak = 0;
-  long secondPeakScore = 0;
-  for (long i = 0; i < numBuckets; i++) {
-    long distanceToBiggest = i - firstPeak;
+  int secondPeak = 0;
+  int secondPeakScore = 0;
+  for (int i = 0; i < numBuckets; i++) {
+    int distanceToBiggest = i - firstPeak;
     // Encourage more distant second peaks by multiplying by square of distance
-    long score = histogram[i] * distanceToBiggest * distanceToBiggest;
+    int score = histogram[i] * distanceToBiggest * distanceToBiggest;
     if (score > secondPeakScore) {
       secondPeak = i;
       secondPeakScore = score;
@@ -1856,7 +1856,7 @@ long GlobalHistogramBinarizer::estimate(vector<int> &histogram) {
 
   // Put firstPeak first
   if (firstPeak > secondPeak) {
-    long temp = firstPeak;
+    int temp = firstPeak;
     firstPeak = secondPeak;
     secondPeak = temp;
   }
@@ -1873,13 +1873,13 @@ long GlobalHistogramBinarizer::estimate(vector<int> &histogram) {
   }
 
   // Find a valley between them that is low and closer to the white peak
-  long bestValley = secondPeak - 1;
-  long bestValleyScore = -1;
-  for (long i = secondPeak - 1; i > firstPeak; i--) {
-    long fromFirst = i - firstPeak;
+  int bestValley = secondPeak - 1;
+  int bestValleyScore = -1;
+  for (int i = secondPeak - 1; i > firstPeak; i--) {
+    int fromFirst = i - firstPeak;
     // Favor a "valley" that is not too close to either peak -- especially not
     // the black peak -- and that has a low value of course
-    long score = fromFirst * fromFirst * (secondPeak - i) *
+    int score = fromFirst * fromFirst * (secondPeak - i) *
       (maxBucketCount - histogram[i]);
     if (score > bestValleyScore) {
       bestValley = i;
@@ -1923,8 +1923,8 @@ Ref<Binarizer> GlobalHistogramBinarizer::createBinarizer(Ref<LuminanceSource> so
 
 namespace zxing {
 
-GreyscaleLuminanceSource::GreyscaleLuminanceSource(unsigned char* greyData, long dataWidth,
-    long dataHeight, long left, long top, long width, long height) : greyData_(greyData),
+GreyscaleLuminanceSource::GreyscaleLuminanceSource(unsigned char* greyData, int dataWidth,
+    int dataHeight, int left, int top, int width, int height) : greyData_(greyData),
     dataWidth_(dataWidth), dataHeight_(dataHeight), left_(left), top_(top), width_(width),
     height_(height) {
 
@@ -1933,27 +1933,27 @@ GreyscaleLuminanceSource::GreyscaleLuminanceSource(unsigned char* greyData, long
   }
 }
 
-unsigned char* GreyscaleLuminanceSource::getRow(long y, unsigned char* row) {
+unsigned char* GreyscaleLuminanceSource::getRow(int y, unsigned char* row) {
   if (y < 0 || y >= this->getHeight()) {
     throw IllegalArgumentException("Requested row is outside the image.");
   }
-  long width = getWidth();
+  int width = getWidth();
   // TODO(flyashi): determine if row has enough size.
   if (row == NULL) {
     row = new unsigned char[width_];
   }
-  long offset = (y + top_) * dataWidth_ + left_;
+  int offset = (y + top_) * dataWidth_ + left_;
   memcpy(row, &greyData_[offset], width);
   return row;
 }
 
 unsigned char* GreyscaleLuminanceSource::getMatrix() {
-  long size = width_ * height_;
+  int size = width_ * height_;
   unsigned char* result = new unsigned char[size];
   if (left_ == 0 && top_ == 0 && dataWidth_ == width_ && dataHeight_ == height_) {
     memcpy(result, greyData_, size);
   } else {
-    for (long row = 0; row < height_; row++) {
+    for (int row = 0; row < height_; row++) {
       memcpy(result + row * width_, greyData_ + (top_ + row) * dataWidth_ + left_, width_);
     }
   }
@@ -1999,7 +1999,7 @@ namespace zxing {
 // Note that dataWidth and dataHeight are not reversed, as we need to be able to traverse the
 // greyData correctly, which does not get rotated.
 GreyscaleRotatedLuminanceSource::GreyscaleRotatedLuminanceSource(unsigned char* greyData,
-    long dataWidth, long dataHeight, long left, long top, long width, long height) : greyData_(greyData),
+    int dataWidth, int dataHeight, int left, int top, int width, int height) : greyData_(greyData),
     dataWidth_(dataWidth), dataHeight_(dataHeight), left_(left), top_(top), width_(width),
     height_(height) {
 
@@ -2010,16 +2010,16 @@ GreyscaleRotatedLuminanceSource::GreyscaleRotatedLuminanceSource(unsigned char* 
 }
 
 // The API asks for rows, but we're rotated, so we return columns.
-unsigned char* GreyscaleRotatedLuminanceSource::getRow(long y, unsigned char* row) {
+unsigned char* GreyscaleRotatedLuminanceSource::getRow(int y, unsigned char* row) {
   if (y < 0 || y >= getHeight()) {
     throw IllegalArgumentException("Requested row is outside the image");
   }
-  long width = getWidth();
+  int width = getWidth();
   if (row == NULL) {
     row = new unsigned char[width];
   }
-  long offset = (left_ * dataWidth_) + (dataWidth_ - (y + top_));
-  for (long x = 0; x < width; x++) {
+  int offset = (left_ * dataWidth_) + (dataWidth_ - (y + top_));
+  for (int x = 0; x < width; x++) {
     row[x] = greyData_[offset];
     offset += dataWidth_;
   }
@@ -2029,7 +2029,7 @@ unsigned char* GreyscaleRotatedLuminanceSource::getRow(long y, unsigned char* ro
 unsigned char* GreyscaleRotatedLuminanceSource::getMatrix() {
   unsigned char* result = new unsigned char[width_ * height_];
   // This depends on getRow() honoring its second parameter.
-  for (long y = 0; y < height_; y++) {
+  for (int y = 0; y < height_; y++) {
     getRow(y, &result[y * width_]);
   }
   return result;
@@ -2073,19 +2073,19 @@ GridSampler GridSampler::gridSampler;
 GridSampler::GridSampler() {
 }
 
-Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimension, Ref<PerspectiveTransform> transform) {
+Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, int dimension, Ref<PerspectiveTransform> transform) {
   Ref<BitMatrix> bits(new BitMatrix(dimension));
   vector<float> points(dimension << 1, (const float)0.0f);
-  for (long y = 0; y < dimension; y++) {
-    long max = points.size();
+  for (int y = 0; y < dimension; y++) {
+    int max = points.size();
     float yValue = (float)y + 0.5f;
-    for (long x = 0; x < max; x += 2) {
+    for (int x = 0; x < max; x += 2) {
       points[x] = (float)(x >> 1) + 0.5f;
       points[x + 1] = yValue;
     }
     transform->transformPoints(points);
     checkAndNudgePoints(image, points);
-    for (long x = 0; x < max; x += 2) {
+    for (int x = 0; x < max; x += 2) {
       if (image->get((int)points[x], (int)points[x + 1])) {
         bits->set(x >> 1, y);
       }
@@ -2094,19 +2094,19 @@ Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimension, Ref
   return bits;
 }
 
-Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimensionX, long dimensionY, Ref<PerspectiveTransform> transform) {
+Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, int dimensionX, int dimensionY, Ref<PerspectiveTransform> transform) {
   Ref<BitMatrix> bits(new BitMatrix(dimensionX, dimensionY));
   vector<float> points(dimensionX << 1, (const float)0.0f);
-  for (long y = 0; y < dimensionY; y++) {
-    long max = points.size();
+  for (int y = 0; y < dimensionY; y++) {
+    int max = points.size();
     float yValue = (float)y + 0.5f;
-    for (long x = 0; x < max; x += 2) {
+    for (int x = 0; x < max; x += 2) {
       points[x] = (float)(x >> 1) + 0.5f;
       points[x + 1] = yValue;
     }
     transform->transformPoints(points);
     checkAndNudgePoints(image, points);
-    for (long x = 0; x < max; x += 2) {
+    for (int x = 0; x < max; x += 2) {
       if (image->get((int)points[x], (int)points[x + 1])) {
         bits->set(x >> 1, y);
       }
@@ -2115,7 +2115,7 @@ Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimensionX, lo
   return bits;
 }
 
-Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimension, float p1ToX, float p1ToY, float p2ToX,
+Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, int dimension, float p1ToX, float p1ToY, float p2ToX,
                                        float p2ToY, float p3ToX, float p3ToY, float p4ToX, float p4ToY, float p1FromX, float p1FromY, float p2FromX,
                                        float p2FromY, float p3FromX, float p3FromY, float p4FromX, float p4FromY) {
   Ref<PerspectiveTransform> transform(PerspectiveTransform::quadrilateralToQuadrilateral(p1ToX, p1ToY, p2ToX, p2ToY,
@@ -2126,8 +2126,8 @@ Ref<BitMatrix> GridSampler::sampleGrid(Ref<BitMatrix> image, long dimension, flo
 }
 
 void GridSampler::checkAndNudgePoints(Ref<BitMatrix> image, vector<float> &points) {
-  long width = image->getWidth();
-  long height = image->getHeight();
+  int width = image->getWidth();
+  int height = image->getHeight();
 
 
   // The Java code assumes that if the start and end points are in bounds, the rest will also be.
@@ -2135,11 +2135,11 @@ void GridSampler::checkAndNudgePoints(Ref<BitMatrix> image, vector<float> &point
   // Since we can't rely on an ArrayIndexOutOfBoundsException like Java, we check every point.
 
   for (size_t offset = 0; offset < points.size(); offset += 2) {
-    long x = (int)points[offset];
-    long y = (int)points[offset + 1];
+    int x = (int)points[offset];
+    int y = (int)points[offset + 1];
     if (x < -1 || x > width || y < -1 || y > height) {
       ostringstream s;
-      s << "Transformed polong out of bounds at " << x << "," << y;
+      s << "Transformed point out of bounds at " << x << "," << y;
       throw ReaderException(s.str().c_str());
     }
 
@@ -2192,10 +2192,10 @@ using namespace std;
 using namespace zxing;
 
 namespace {
-  const long BLOCK_SIZE_POWER = 3;
-  const long BLOCK_SIZE = 1 << BLOCK_SIZE_POWER;
-  const long BLOCK_SIZE_MASK = BLOCK_SIZE - 1;
-  const long MINIMUM_DIMENSION = BLOCK_SIZE * 5;
+  const int BLOCK_SIZE_POWER = 3;
+  const int BLOCK_SIZE = 1 << BLOCK_SIZE_POWER;
+  const int BLOCK_SIZE_MASK = BLOCK_SIZE - 1;
+  const int MINIMUM_DIMENSION = BLOCK_SIZE * 5;
 }
 
 HybridBinarizer::HybridBinarizer(Ref<LuminanceSource> source) :
@@ -2223,13 +2223,13 @@ Ref<BitMatrix> HybridBinarizer::getBlackMatrix() {
   if (source.getWidth() >= MINIMUM_DIMENSION &&
       source.getHeight() >= MINIMUM_DIMENSION) {
     unsigned char* luminances = source.getMatrix();
-    long width = source.getWidth();
-    long height = source.getHeight();
-    long subWidth = width >> BLOCK_SIZE_POWER;
+    int width = source.getWidth();
+    int height = source.getHeight();
+    int subWidth = width >> BLOCK_SIZE_POWER;
     if ((width & BLOCK_SIZE_MASK) != 0) {
       subWidth++;
     }
-    long subHeight = height >> BLOCK_SIZE_POWER;
+    int subHeight = height >> BLOCK_SIZE_POWER;
     if ((height & BLOCK_SIZE_MASK) != 0) {
       subHeight++;
     }
@@ -2247,7 +2247,7 @@ Ref<BitMatrix> HybridBinarizer::getBlackMatrix() {
     matrix_ = newMatrix;
 
     // N.B.: these deletes are inadequate if anything between the new
-    // and this polong can throw.  As of this writing, it doesn't look
+    // and this point can throw.  As of this writing, it doesn't look
     // like they do.
 
     delete [] blackPoints;
@@ -2261,52 +2261,52 @@ Ref<BitMatrix> HybridBinarizer::getBlackMatrix() {
 
 void
 HybridBinarizer::calculateThresholdForBlock(unsigned char* luminances,
-                                            long subWidth,
-                                            long subHeight,
-                                            long width,
-                                            long height,
-                                            long blackPoints[],
+                                            int subWidth,
+                                            int subHeight,
+                                            int width,
+                                            int height,
+                                            int blackPoints[],
                                             Ref<BitMatrix> const& matrix) {
-  for (long y = 0; y < subHeight; y++) {
-    long yoffset = y << BLOCK_SIZE_POWER;
+  for (int y = 0; y < subHeight; y++) {
+    int yoffset = y << BLOCK_SIZE_POWER;
     if (yoffset + BLOCK_SIZE >= height) {
       yoffset = height - BLOCK_SIZE;
     }
-    for (long x = 0; x < subWidth; x++) {
-      long xoffset = x << BLOCK_SIZE_POWER;
+    for (int x = 0; x < subWidth; x++) {
+      int xoffset = x << BLOCK_SIZE_POWER;
       if (xoffset + BLOCK_SIZE >= width) {
         xoffset = width - BLOCK_SIZE;
       }
-      long left = (x > 1) ? x : 2;
+      int left = (x > 1) ? x : 2;
       left = (left < subWidth - 2) ? left : subWidth - 3;
-      long top = (y > 1) ? y : 2;
+      int top = (y > 1) ? y : 2;
       top = (top < subHeight - 2) ? top : subHeight - 3;
-      long sum = 0;
-      for (long z = -2; z <= 2; z++) {
-        long *blackRow = &blackPoints[(top + z) * subWidth];
+      int sum = 0;
+      for (int z = -2; z <= 2; z++) {
+        int *blackRow = &blackPoints[(top + z) * subWidth];
         sum += blackRow[left - 2];
         sum += blackRow[left - 1];
         sum += blackRow[left];
         sum += blackRow[left + 1];
         sum += blackRow[left + 2];
       }
-      long average = sum / 25;
+      int average = sum / 25;
       threshold8x8Block(luminances, xoffset, yoffset, average, width, matrix);
     }
   }
 }
 
 void HybridBinarizer::threshold8x8Block(unsigned char* luminances,
-                                        long xoffset,
-                                        long yoffset,
-                                        long threshold,
-                                        long stride,
+                                        int xoffset,
+                                        int yoffset,
+                                        int threshold,
+                                        int stride,
                                         Ref<BitMatrix> const& matrix) {
-  for (long y = 0, offset = yoffset * stride + xoffset;
+  for (int y = 0, offset = yoffset * stride + xoffset;
        y < BLOCK_SIZE;
        y++,  offset += stride) {
-    for (long x = 0; x < BLOCK_SIZE; x++) {
-      long pixel = luminances[offset + x] & 0xff;
+    for (int x = 0; x < BLOCK_SIZE; x++) {
+      int pixel = luminances[offset + x] & 0xff;
       if (pixel <= threshold) {
         matrix->set(xoffset + x, yoffset + y);
       }
@@ -2315,34 +2315,34 @@ void HybridBinarizer::threshold8x8Block(unsigned char* luminances,
 }
 
 namespace {
-  inline long getBlackPointFromNeighbors(int* blackPoints, long subWidth, long x, long y) {
+  inline int getBlackPointFromNeighbors(int* blackPoints, int subWidth, int x, int y) {
     return (blackPoints[(y-1)*subWidth+x] +
             2*blackPoints[y*subWidth+x-1] +
             blackPoints[(y-1)*subWidth+x-1]) >> 2;
   }
 }
 
-int* HybridBinarizer::calculateBlackPoints(unsigned char* luminances, long subWidth, long subHeight,
-    long width, long height) {
-  long *blackPoints = new int[subHeight * subWidth];
-  for (long y = 0; y < subHeight; y++) {
-    long yoffset = y << BLOCK_SIZE_POWER;
+int* HybridBinarizer::calculateBlackPoints(unsigned char* luminances, int subWidth, int subHeight,
+    int width, int height) {
+  int *blackPoints = new int[subHeight * subWidth];
+  for (int y = 0; y < subHeight; y++) {
+    int yoffset = y << BLOCK_SIZE_POWER;
     if (yoffset + BLOCK_SIZE >= height) {
       yoffset = height - BLOCK_SIZE;
     }
-    for (long x = 0; x < subWidth; x++) {
-      long xoffset = x << BLOCK_SIZE_POWER;
+    for (int x = 0; x < subWidth; x++) {
+      int xoffset = x << BLOCK_SIZE_POWER;
       if (xoffset + BLOCK_SIZE >= width) {
         xoffset = width - BLOCK_SIZE;
       }
-      long sum = 0;
-      long min = 0xFF;
-      long max = 0;
-      for (long yy = 0, offset = yoffset * width + xoffset;
+      int sum = 0;
+      int min = 0xFF;
+      int max = 0;
+      for (int yy = 0, offset = yoffset * width + xoffset;
            yy < BLOCK_SIZE;
            yy++, offset += width) {
-        for (long xx = 0; xx < BLOCK_SIZE; xx++) {
-          long pixel = luminances[offset + xx] & 0xFF;
+        for (int xx = 0; xx < BLOCK_SIZE; xx++) {
+          int pixel = luminances[offset + xx] & 0xFF;
           sum += pixel;
           if (pixel < min) {
             min = pixel;
@@ -2355,11 +2355,11 @@ int* HybridBinarizer::calculateBlackPoints(unsigned char* luminances, long subWi
 
       // See
       // http://groups.google.com/group/zxing/browse_thread/thread/d06efa2c35a7ddc0
-      long average = sum >> 6;
+      int average = sum >> 6;
       if (max - min <= 24) {
         average = min >> 1;
         if (y > 0 && x > 0) {
-          long bp = getBlackPointFromNeighbors(blackPoints, subWidth, x, y);
+          int bp = getBlackPointFromNeighbors(blackPoints, subWidth, x, y);
           if (min < bp) {
             average = bp;
           }
@@ -2474,12 +2474,12 @@ Ref<PerspectiveTransform> PerspectiveTransform::squareToQuadrilateral(float x0, 
 
 Ref<PerspectiveTransform> PerspectiveTransform::quadrilateralToSquare(float x0, float y0, float x1, float y1, float x2,
     float y2, float x3, float y3) {
-  // Here, the adjolong serves as the inverse:
+  // Here, the adjoint serves as the inverse:
   return squareToQuadrilateral(x0, y0, x1, y1, x2, y2, x3, y3)->buildAdjoint();
 }
 
 Ref<PerspectiveTransform> PerspectiveTransform::buildAdjoint() {
-  // Adjolong is the transpose of the cofactor matrix:
+  // Adjoint is the transpose of the cofactor matrix:
   Ref<PerspectiveTransform> result(new PerspectiveTransform(a22 * a33 - a23 * a32, a23 * a31 - a21 * a33, a21 * a32
                                    - a22 * a31, a13 * a32 - a12 * a33, a11 * a33 - a13 * a31, a12 * a31 - a11 * a32, a12 * a23 - a13 * a22,
                                    a13 * a21 - a11 * a23, a11 * a22 - a12 * a21));
@@ -2497,8 +2497,8 @@ Ref<PerspectiveTransform> PerspectiveTransform::times(Ref<PerspectiveTransform> 
 }
 
 void PerspectiveTransform::transformPoints(vector<float> &points) {
-  long max = points.size();
-  for (long i = 0; i < max; i += 2) {
+  int max = points.size();
+  for (int i = 0; i < max; i += 2) {
     float x = points[i];
     float y = points[i + 1];
     float denominator = a13 * x + a23 * y + a33;
@@ -2596,7 +2596,7 @@ char const* const StringUtils::ISO88591 = "ISO8859-1";
 const bool StringUtils::ASSUME_SHIFT_JIS = false;
 
 string
-StringUtils::guessEncoding(unsigned char* bytes, long length, Hashtable const& hints) {
+StringUtils::guessEncoding(unsigned char* bytes, int length, Hashtable const& hints) {
   Hashtable::const_iterator i = hints.find(DecodeHints::CHARACTER_SET);
   if (i != hints.end()) {
     return i->second;
@@ -2618,18 +2618,18 @@ StringUtils::guessEncoding(unsigned char* bytes, long length, Hashtable const& h
   bool canBeISO88591 = true;
   bool canBeShiftJIS = true;
   bool canBeUTF8 = true;
-  long utf8BytesLeft = 0;
-  long maybeDoubleByteCount = 0;
-  long maybeSingleByteKatakanaCount = 0;
+  int utf8BytesLeft = 0;
+  int maybeDoubleByteCount = 0;
+  int maybeSingleByteKatakanaCount = 0;
   bool sawLatin1Supplement = false;
   bool sawUTF8Start = false;
   bool lastWasPossibleDoubleByteStart = false;
 
-  for (long i = 0;
+  for (int i = 0;
        i < length && (canBeISO88591 || canBeShiftJIS || canBeUTF8);
        i++) {
 
-    long value = bytes[i] & 0xFF;
+    int value = bytes[i] & 0xFF;
 
     // UTF-8 stuff
     if (value >= 0x80 && value <= 0xBF) {
@@ -2642,7 +2642,7 @@ StringUtils::guessEncoding(unsigned char* bytes, long length, Hashtable const& h
       }
       if (value >= 0xC0 && value <= 0xFD) {
         sawUTF8Start = true;
-        long valueCopy = value;
+        int valueCopy = value;
         while ((valueCopy & 0x40) != 0) {
           utf8BytesLeft++;
           valueCopy <<= 1;
@@ -2656,7 +2656,7 @@ StringUtils::guessEncoding(unsigned char* bytes, long length, Hashtable const& h
       // This is really a poor hack. The slightly more exotic characters people might want to put in
       // a QR Code, by which I mean the Latin-1 supplement characters (e.g. u-umlaut) have encodings
       // that start with 0xC2 followed by [0xA0,0xBF], or start with 0xC3 followed by [0x80,0xBF].
-      long nextValue = bytes[i + 1] & 0xFF;
+      int nextValue = bytes[i + 1] & 0xFF;
       if (nextValue <= 0xBF &&
           ((value == 0xC2 && nextValue >= 0xA0) || (value == 0xC3 && nextValue >= 0x80))) {
         sawLatin1Supplement = true;
@@ -2694,7 +2694,7 @@ StringUtils::guessEncoding(unsigned char* bytes, long length, Hashtable const& h
         if (i >= length - 1) {
           canBeShiftJIS = false;
         } else {
-          long nextValue = bytes[i + 1] & 0xFF;
+          int nextValue = bytes[i + 1] & 0xFF;
           if (nextValue < 0x40 || nextValue > 0xFC) {
             canBeShiftJIS = false;
           } else {
@@ -2765,17 +2765,17 @@ namespace zxing {
 using namespace std;
 
 std::vector<Ref<ResultPoint> > MonochromeRectangleDetector::detect() {
-    long height = image_->getHeight();
-    long width = image_->getWidth();
-    long halfHeight = height >> 1;
-    long halfWidth = width >> 1;
-    long deltaY = max(1, height / (MAX_MODULES << 3));
-    long deltaX = max(1, width / (MAX_MODULES << 3));
+    int height = image_->getHeight();
+    int width = image_->getWidth();
+    int halfHeight = height >> 1;
+    int halfWidth = width >> 1;
+    int deltaY = max(1, height / (MAX_MODULES << 3));
+    int deltaX = max(1, width / (MAX_MODULES << 3));
 
-    long top = 0;
-    long bottom = height;
-    long left = 0;
-    long right = width;
+    int top = 0;
+    int bottom = height;
+    int left = 0;
+    int right = width;
     Ref<ResultPoint> pointA(findCornerFromCenter(halfWidth, 0, left, right,
         halfHeight, -deltaY, top, bottom, halfWidth >> 1));
     top = (int) pointA->getY() - 1;;
@@ -2789,7 +2789,7 @@ std::vector<Ref<ResultPoint> > MonochromeRectangleDetector::detect() {
         halfHeight, deltaY, top, bottom, halfWidth >> 1));
     bottom = (int) pointD->getY() + 1;
 
-    // Go try to find polong A again with better information -- might have been off at first.
+    // Go try to find point A again with better information -- might have been off at first.
     pointA.reset(findCornerFromCenter(halfWidth, 0, left, right,
         halfHeight, -deltaY, top, bottom, halfWidth >> 2));
 
@@ -2801,10 +2801,10 @@ std::vector<Ref<ResultPoint> > MonochromeRectangleDetector::detect() {
     return corners;
   }
 
-Ref<ResultPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX, long deltaX, long left, long right,
-      long centerY, long deltaY, long top, long bottom, long maxWhiteRun) {
+Ref<ResultPoint> MonochromeRectangleDetector::findCornerFromCenter(int centerX, int deltaX, int left, int right,
+      int centerY, int deltaY, int top, int bottom, int maxWhiteRun) {
 	  Ref<TwoInts> lastRange(NULL);
-    for (long y = centerY, x = centerX;
+    for (int y = centerY, x = centerX;
          y < bottom && y >= top && x < right && x >= left;
          y += deltaY, x += deltaX) {
       Ref<TwoInts> range(NULL);
@@ -2821,7 +2821,7 @@ Ref<ResultPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
         } else {
         // lastRange was found
         if (deltaX == 0) {
-          long lastY = y - deltaY;
+          int lastY = y - deltaY;
           if (lastRange->start < centerX) {
             if (lastRange->end > centerX) {
               // straddle, choose one or the other based on direction
@@ -2835,7 +2835,7 @@ Ref<ResultPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
 			      return result;
             }
         } else {
-          long lastX = x - deltaX;
+          int lastX = x - deltaX;
           if (lastRange->start < centerY) {
             if (lastRange->end > centerY) {
 			        Ref<ResultPoint> result(new ResultPoint(lastX, deltaX < 0 ? lastRange->start : lastRange->end));
@@ -2855,23 +2855,23 @@ Ref<ResultPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
     throw NotFoundException("Couldn't find corners");
   }
 
-Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(long fixedDimension, long maxWhiteRun, long minDim, long maxDim,
+Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(int fixedDimension, int maxWhiteRun, int minDim, int maxDim,
       bool horizontal) {
 
-	  long center = (minDim + maxDim) >> 1;
+	  int center = (minDim + maxDim) >> 1;
 
     // Scan left/up first
-    long start = center;
+    int start = center;
     while (start >= minDim) {
       if (horizontal ? image_->get(start, fixedDimension) : image_->get(fixedDimension, start)) {
         start--;
       } else {
-        long whiteRunStart = start;
+        int whiteRunStart = start;
         do {
           start--;
         } while (start >= minDim && !(horizontal ? image_->get(start, fixedDimension) :
             image_->get(fixedDimension, start)));
-        long whiteRunSize = whiteRunStart - start;
+        int whiteRunSize = whiteRunStart - start;
         if (start < minDim || whiteRunSize > maxWhiteRun) {
           start = whiteRunStart;
           break;
@@ -2881,17 +2881,17 @@ Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(long fixedDimension, l
     start++;
 
     // Then try right/down
-    long end = center;
+    int end = center;
     while (end < maxDim) {
       if (horizontal ? image_->get(end, fixedDimension) : image_->get(fixedDimension, end)) {
         end++;
       } else {
-        long whiteRunStart = end;
+        int whiteRunStart = end;
         do {
           end++;
         } while (end < maxDim && !(horizontal ? image_->get(end, fixedDimension) :
             image_->get(fixedDimension, end)));
-        long whiteRunSize = end - whiteRunStart;
+        int whiteRunSize = end - whiteRunStart;
         if (end >= maxDim || whiteRunSize > maxWhiteRun) {
           end = whiteRunStart;
           break;
@@ -2939,8 +2939,8 @@ Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(long fixedDimension, l
 namespace zxing {
 using namespace std;
 
-long WhiteRectangleDetector::INIT_SIZE = 30;
-long WhiteRectangleDetector::CORR = 1;
+int WhiteRectangleDetector::INIT_SIZE = 30;
+int WhiteRectangleDetector::CORR = 1;
 
 
 WhiteRectangleDetector::WhiteRectangleDetector(Ref<BitMatrix> image) : image_(image) {
@@ -2957,16 +2957,16 @@ WhiteRectangleDetector::WhiteRectangleDetector(Ref<BitMatrix> image) : image_(im
  *
  * @return {@link vector<Ref<ResultPoint> >} describing the corners of the rectangular
  *         region. The first and last points are opposed on the diagonal, as
- *         are the second and third. The first polong will be the topmost
- *         polong and the last, the bottommost. The second polong will be
+ *         are the second and third. The first point will be the topmost
+ *         point and the last, the bottommost. The second point will be
  *         leftmost and the third, the rightmost
  * @throws NotFoundException if no Data Matrix Code can be found
 */
 std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
-  long left = (width_ - INIT_SIZE) >> 1;
-  long right = (width_ + INIT_SIZE) >> 1;
-  long up = (height_ - INIT_SIZE) >> 1;
-  long down = (height_ + INIT_SIZE) >> 1;
+  int left = (width_ - INIT_SIZE) >> 1;
+  int right = (width_ + INIT_SIZE) >> 1;
+  int up = (height_ - INIT_SIZE) >> 1;
+  int down = (height_ + INIT_SIZE) >> 1;
   if (up < 0 || left < 0 || down >= height_ || right >= width_) {
     throw NotFoundException("Invalid dimensions WhiteRectangleDetector");
   }
@@ -3053,11 +3053,11 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
   }
   if (!sizeExceeded && atLeastOneBlackPointFoundOnBorder) {
 
-    long maxSize = right - left;
+    int maxSize = right - left;
 
     Ref<ResultPoint> z(NULL);
     //go up right
-    for (long i = 1; i < maxSize; i++) {
+    for (int i = 1; i < maxSize; i++) {
       z = getBlackPointOnSegment(left, down - i, left + i, down);
       if (z != NULL) {
         break;
@@ -3070,7 +3070,7 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
 
     Ref<ResultPoint> t(NULL);
     //go down right
-    for (long i = 1; i < maxSize; i++) {
+    for (int i = 1; i < maxSize; i++) {
       t = getBlackPointOnSegment(left, up + i, left + i, up);
       if (t != NULL) {
         break;
@@ -3083,7 +3083,7 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
 
     Ref<ResultPoint> x(NULL);
     //go down left
-    for (long i = 1; i < maxSize; i++) {
+    for (int i = 1; i < maxSize; i++) {
       x = getBlackPointOnSegment(right, up + i, right - i, up);
       if (x != NULL) {
         break;
@@ -3096,7 +3096,7 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
 
     Ref<ResultPoint> y(NULL);
     //go up left
-    for (long i = 1; i < maxSize; i++) {
+    for (int i = 1; i < maxSize; i++) {
       y = getBlackPointOnSegment(right, down - i, right - i, down);
       if (y != NULL) {
         break;
@@ -3110,7 +3110,7 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
     return centerEdges(y, z, x, t);
 
   } else {
-    throw NotFoundException("No black polong found on border");
+    throw NotFoundException("No black point found on border");
   }
 }
 
@@ -3118,17 +3118,17 @@ std::vector<Ref<ResultPoint> > WhiteRectangleDetector::detect() {
  * Ends up being a bit faster than Math.round(). This merely rounds its
  * argument to the nearest int, where x.5 rounds up.
  */
-long WhiteRectangleDetector::round(float d) {
+int WhiteRectangleDetector::round(float d) {
   return (int) (d + 0.5f);
 }
 
 Ref<ResultPoint> WhiteRectangleDetector::getBlackPointOnSegment(float aX, float aY, float bX, float bY) {
-  long dist = distanceL2(aX, aY, bX, bY);
+  int dist = distanceL2(aX, aY, bX, bY);
   float xStep = (bX - aX) / dist;
   float yStep = (bY - aY) / dist;
-  for (long i = 0; i < dist; i++) {
-    long x = round(aX + i * xStep);
-    long y = round(aY + i * yStep);
+  for (int i = 0; i < dist; i++) {
+    int x = round(aX + i * xStep);
+    int y = round(aY + i * yStep);
     if (image_->get(x, y)) {
       Ref<ResultPoint> point(new ResultPoint(x, y));
       return point;
@@ -3138,7 +3138,7 @@ Ref<ResultPoint> WhiteRectangleDetector::getBlackPointOnSegment(float aX, float 
   return point;
 }
 
-long WhiteRectangleDetector::distanceL2(float aX, float aY, float bX, float bY) {
+int WhiteRectangleDetector::distanceL2(float aX, float aY, float bX, float bY) {
   float xDiff = aX - bX;
   float yDiff = aY - bY;
   return round((float)sqrt(xDiff * xDiff + yDiff * yDiff));
@@ -3153,8 +3153,8 @@ long WhiteRectangleDetector::distanceL2(float aX, float aY, float bX, float bY) 
  * @param t top most point
  * @return {@link vector<Ref<ResultPoint> >} describing the corners of the rectangular
  *         region. The first and last points are opposed on the diagonal, as
- *         are the second and third. The first polong will be the topmost
- *         polong and the last, the bottommost. The second polong will be
+ *         are the second and third. The first point will be the topmost
+ *         point and the last, the bottommost. The second point will be
  *         leftmost and the third, the rightmost
  */
 vector<Ref<ResultPoint> > WhiteRectangleDetector::centerEdges(Ref<ResultPoint> y, Ref<ResultPoint> z,
@@ -3206,17 +3206,17 @@ vector<Ref<ResultPoint> > WhiteRectangleDetector::centerEdges(Ref<ResultPoint> y
  * @param b          max value of the scanned coordinate
  * @param fixed      value of fixed coordinate
  * @param horizontal set to true if scan must be horizontal, false if vertical
- * @return true if a black polong has been found, else false.
+ * @return true if a black point has been found, else false.
  */
-bool WhiteRectangleDetector::containsBlackPoint(long a, long b, long fixed, bool horizontal) {
+bool WhiteRectangleDetector::containsBlackPoint(int a, int b, int fixed, bool horizontal) {
   if (horizontal) {
-    for (long x = a; x <= b; x++) {
+    for (int x = a; x <= b; x++) {
       if (image_->get(x, fixed)) {
         return true;
       }
     }
   } else {
-    for (long y = a; y <= b; y++) {
+    for (int y = a; y <= b; y++) {
       if (image_->get(fixed, y)) {
         return true;
       }
@@ -3260,21 +3260,21 @@ bool WhiteRectangleDetector::containsBlackPoint(long a, long b, long fixed, bool
 namespace zxing {
 using namespace std;
 
-static inline ArrayRef<int> makeArray(long value) {
+static inline ArrayRef<int> makeArray(int value) {
   ArrayRef<int> valuesRef(new Array<int> (value, 1));
   return valuesRef;
 }
 
-static inline Ref<GF256Poly> refPoly(GF256 &field, long value) {
+static inline Ref<GF256Poly> refPoly(GF256 &field, int value) {
   ArrayRef<int> values(makeArray(value));
   Ref<GF256Poly> result(new GF256Poly(field, values));
   return result;
 }
 
-GF256::GF256(long primitive) :
+GF256::GF256(int primitive) :
     exp_(256, (const int)0), log_(256, (const int)0), zero_(refPoly(*this, 0)), one_(refPoly(*this, 1)) {
-  long x = 1;
-  for (long i = 0; i < 256; i++) {
+  int x = 1;
+  for (int i = 0; i < 256; i++) {
     exp_[i] = x;
     x <<= 1;
     if (x >= 0x100) {
@@ -3284,7 +3284,7 @@ GF256::GF256(long primitive) :
 
   // log(0) == 0, but should never be used
   log_[0] = 0;
-  for (long i = 0; i < 255; i++) {
+  for (int i = 0; i < 255; i++) {
     log_[exp_[i]] = i;
   }
 }
@@ -3297,7 +3297,7 @@ Ref<GF256Poly> GF256::getOne() {
   return one_;
 }
 
-Ref<GF256Poly> GF256::buildMonomial(long degree, long coefficient) {
+Ref<GF256Poly> GF256::buildMonomial(int degree, int coefficient) {
 #ifdef DEBUG
   cout << __FUNCTION__ << "\n";
 #endif
@@ -3307,40 +3307,40 @@ Ref<GF256Poly> GF256::buildMonomial(long degree, long coefficient) {
   if (coefficient == 0) {
     return zero_;
   }
-  long nCoefficients = degree + 1;
+  int nCoefficients = degree + 1;
   ArrayRef<int> coefficients(new Array<int> (nCoefficients));
   coefficients[0] = coefficient;
   Ref<GF256Poly> result(new GF256Poly(*this, coefficients));
   return result;
 }
 
-long GF256::addOrSubtract(long a, long b) {
+int GF256::addOrSubtract(int a, int b) {
   return a ^ b;
 }
 
-long GF256::exp(long a) {
+int GF256::exp(int a) {
   return exp_[a];
 }
 
-long GF256::log(long a) {
+int GF256::log(int a) {
   if (a == 0) {
     throw IllegalArgumentException("Cannot take the logarithm of 0");
   }
   return log_[a];
 }
 
-long GF256::inverse(long a) {
+int GF256::inverse(int a) {
   if (a == 0) {
     throw IllegalArgumentException("Cannot calculate the inverse of 0");
   }
   return exp_[255 - log_[a]];
 }
 
-long GF256::multiply(long a, long b) {
+int GF256::multiply(int a, int b) {
   if (a == 0 || b == 0) {
     return 0;
   }
-  long logSum = log_[a] + log_[b];
+  int logSum = log_[a] + log_[b];
   // index is a sped-up alternative to logSum % 255 since sum
   // is in [0,510]. Thanks to jmsachs for the idea
   return exp_[(logSum & 0xFF) + (logSum >> 8)];
@@ -3352,12 +3352,12 @@ GF256 GF256::DATA_MATRIX_FIELD(0x012D); // x^8 + x^5 + x^3 + x^2 + 1
 ostream& operator<<(ostream& out, const GF256& field) {
   out << "Field[\nexp=(";
   out << field.exp_[0];
-  for (long i = 1; i < 256; i++) {
+  for (int i = 1; i < 256; i++) {
     out << "," << field.exp_[i];
   }
   out << "),\nlog=(";
   out << field.log_[0];
-  for (long i = 1; i < 256; i++) {
+  for (int i = 1; i < 256; i++) {
     out << "," << field.log_[i];
   }
   out << ")\n]";
@@ -3398,11 +3398,11 @@ namespace zxing {
 using namespace std;
 
 void GF256Poly::fixCoefficients() {
-  long coefficientsLength = coefficients.size();
+  int coefficientsLength = coefficients.size();
   if (coefficientsLength > 1 && coefficients[0] == 0) {
     // Leading term must be non-zero for anything except
     // the constant polynomial "0"
-    long firstNonZero = 1;
+    int firstNonZero = 1;
     while (firstNonZero < coefficientsLength && coefficients[firstNonZero] == 0) {
       firstNonZero++;
     }
@@ -3414,7 +3414,7 @@ void GF256Poly::fixCoefficients() {
       ArrayRef<int> c(coefficients);
       coefficientsLength -= firstNonZero;
       coefficients.reset(new Array<int> (coefficientsLength));
-      for (long i = 0; i < coefficientsLength; i++) {
+      for (int i = 0; i < coefficientsLength; i++) {
         coefficients[i] = c[i + firstNonZero];
       }
     }
@@ -3430,7 +3430,7 @@ GF256Poly::~GF256Poly() {
 
 }
 
-long GF256Poly::getDegree() {
+int GF256Poly::getDegree() {
   return coefficients.size() - 1;
 }
 
@@ -3438,25 +3438,25 @@ bool GF256Poly::isZero() {
   return coefficients[0] == 0;
 }
 
-long GF256Poly::getCoefficient(long degree) {
+int GF256Poly::getCoefficient(int degree) {
   return coefficients[coefficients.size() - 1 - degree];
 }
 
-long GF256Poly::evaluateAt(long a) {
+int GF256Poly::evaluateAt(int a) {
   if (a == 0) {
     return getCoefficient(0);
   }
-  long size = coefficients.size();
+  int size = coefficients.size();
   if (a == 1) {
     // Just the sum of the coefficients
-    long result = 0;
-    for (long i = 0; i < size; i++) {
+    int result = 0;
+    for (int i = 0; i < size; i++) {
       result = GF256::addOrSubtract(result, coefficients[i]);
     }
     return result;
   }
-  long result = coefficients[0];
-  for (long i = 1; i < size; i++) {
+  int result = coefficients[0];
+  for (int i = 1; i < size; i++) {
     result = GF256::addOrSubtract(field.multiply(a, result), coefficients[i]);
   }
   return result;
@@ -3501,14 +3501,14 @@ Ref<GF256Poly> GF256Poly::multiply(Ref<GF256Poly> b) {
     return field.getZero();
   }
   ArrayRef<int> aCoefficients = coefficients;
-  long aLength = aCoefficients.size();
+  int aLength = aCoefficients.size();
   ArrayRef<int> bCoefficients = b->coefficients;
-  long bLength = bCoefficients.size();
-  long productLength = aLength + bLength - 1;
+  int bLength = bCoefficients.size();
+  int productLength = aLength + bLength - 1;
   ArrayRef<int> product(new Array<int> (productLength));
-  for (long i = 0; i < aLength; i++) {
-    long aCoeff = aCoefficients[i];
-    for (long j = 0; j < bLength; j++) {
+  for (int i = 0; i < aLength; i++) {
+    int aCoeff = aCoefficients[i];
+    for (int j = 0; j < bLength; j++) {
       product[i + j] = GF256::addOrSubtract(product[i + j], field.multiply(aCoeff, bCoefficients[j]));
     }
   }
@@ -3516,31 +3516,31 @@ Ref<GF256Poly> GF256Poly::multiply(Ref<GF256Poly> b) {
   return Ref<GF256Poly>(new GF256Poly(field, product));
 }
 
-Ref<GF256Poly> GF256Poly::multiply(long scalar) {
+Ref<GF256Poly> GF256Poly::multiply(int scalar) {
   if (scalar == 0) {
     return field.getZero();
   }
   if (scalar == 1) {
     return Ref<GF256Poly>(this);
   }
-  long size = coefficients.size();
+  int size = coefficients.size();
   ArrayRef<int> product(new Array<int> (size));
-  for (long i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     product[i] = field.multiply(coefficients[i], scalar);
   }
   return Ref<GF256Poly>(new GF256Poly(field, product));
 }
 
-Ref<GF256Poly> GF256Poly::multiplyByMonomial(long degree, long coefficient) {
+Ref<GF256Poly> GF256Poly::multiplyByMonomial(int degree, int coefficient) {
   if (degree < 0) {
     throw IllegalArgumentException("Degree must be non-negative");
   }
   if (coefficient == 0) {
     return field.getZero();
   }
-  long size = coefficients.size();
+  int size = coefficients.size();
   ArrayRef<int> product(new Array<int> (size + degree));
-  for (long i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     product[i] = field.multiply(coefficients[i], coefficient);
   }
   return Ref<GF256Poly>(new GF256Poly(field, product));
@@ -3609,7 +3609,7 @@ ReedSolomonDecoder::ReedSolomonDecoder(GF256 &fld) :
 ReedSolomonDecoder::~ReedSolomonDecoder() {
 }
 
-void ReedSolomonDecoder::decode(ArrayRef<int> received, long twoS) {
+void ReedSolomonDecoder::decode(ArrayRef<int> received, int twoS) {
 
   Ref<GF256Poly> poly(new GF256Poly(field, received));
 
@@ -3628,8 +3628,8 @@ void ReedSolomonDecoder::decode(ArrayRef<int> received, long twoS) {
 
   bool dataMatrix = (&field == &GF256::DATA_MATRIX_FIELD);
   bool noError = true;
-  for (long i = 0; i < twoS; i++) {
-    long eval = poly->evaluateAt(field.exp(dataMatrix ? i + 1 : i));
+  for (int i = 0; i < twoS; i++) {
+    int eval = poly->evaluateAt(field.exp(dataMatrix ? i + 1 : i));
     syndromeCoefficients[syndromeCoefficients->size() - 1 - i] = eval;
     if (eval != 0) {
       noError = false;
@@ -3645,7 +3645,7 @@ void ReedSolomonDecoder::decode(ArrayRef<int> received, long twoS) {
   ArrayRef<int> errorLocations = findErrorLocations(sigmaOmega[0]);
   ArrayRef<int> errorMagitudes = findErrorMagnitudes(sigmaOmega[1], errorLocations, dataMatrix);
   for (unsigned i = 0; i < errorLocations->size(); i++) {
-    long position = received->size() - 1 - field.log(errorLocations[i]);
+    int position = received->size() - 1 - field.log(errorLocations[i]);
     //TODO: check why the position would be invalid
     if (position < 0 || (size_t)position >= received.size())
       throw IllegalArgumentException("Invalid position (ReedSolomonDecoder)");
@@ -3653,7 +3653,7 @@ void ReedSolomonDecoder::decode(ArrayRef<int> received, long twoS) {
   }
 }
 
-vector<Ref<GF256Poly> > ReedSolomonDecoder::runEuclideanAlgorithm(Ref<GF256Poly> a, Ref<GF256Poly> b, long R) {
+vector<Ref<GF256Poly> > ReedSolomonDecoder::runEuclideanAlgorithm(Ref<GF256Poly> a, Ref<GF256Poly> b, int R) {
   // Assume a's degree is >= b's
   if (a->getDegree() < b->getDegree()) {
     Ref<GF256Poly> tmp = a;
@@ -3686,11 +3686,11 @@ vector<Ref<GF256Poly> > ReedSolomonDecoder::runEuclideanAlgorithm(Ref<GF256Poly>
     }
     r = rLastLast;
     Ref<GF256Poly> q(field.getZero());
-    long denominatorLeadingTerm = rLast->getCoefficient(rLast->getDegree());
-    long dltInverse = field.inverse(denominatorLeadingTerm);
+    int denominatorLeadingTerm = rLast->getCoefficient(rLast->getDegree());
+    int dltInverse = field.inverse(denominatorLeadingTerm);
     while (r->getDegree() >= rLast->getDegree() && !r->isZero()) {
-      long degreeDiff = r->getDegree() - rLast->getDegree();
-      long scale = field.multiply(r->getCoefficient(r->getDegree()), dltInverse);
+      int degreeDiff = r->getDegree() - rLast->getDegree();
+      int scale = field.multiply(r->getCoefficient(r->getDegree()), dltInverse);
       q = q->addOrSubtract(field.buildMonomial(degreeDiff, scale));
       r = r->addOrSubtract(rLast->multiplyByMonomial(degreeDiff, scale));
     }
@@ -3699,12 +3699,12 @@ vector<Ref<GF256Poly> > ReedSolomonDecoder::runEuclideanAlgorithm(Ref<GF256Poly>
     t = q->multiply(tLast)->addOrSubtract(tLastLast);
   }
 
-  long sigmaTildeAtZero = t->getCoefficient(0);
+  int sigmaTildeAtZero = t->getCoefficient(0);
   if (sigmaTildeAtZero == 0) {
     throw ReedSolomonException("sigmaTilde(0) was zero");
   }
 
-  long inverse = field.inverse(sigmaTildeAtZero);
+  int inverse = field.inverse(sigmaTildeAtZero);
   Ref<GF256Poly> sigma(t->multiply(inverse));
   Ref<GF256Poly> omega(r->multiply(inverse));
 
@@ -3724,15 +3724,15 @@ vector<Ref<GF256Poly> > ReedSolomonDecoder::runEuclideanAlgorithm(Ref<GF256Poly>
 
 ArrayRef<int> ReedSolomonDecoder::findErrorLocations(Ref<GF256Poly> errorLocator) {
   // This is a direct application of Chien's search
-  long numErrors = errorLocator->getDegree();
+  int numErrors = errorLocator->getDegree();
   if (numErrors == 1) { // shortcut
     ArrayRef<int> result(1);
     result[0] = errorLocator->getCoefficient(1);
     return result;
   }
   ArrayRef<int> result(numErrors);
-  long e = 0;
-  for (long i = 1; i < 256 && e < numErrors; i++) {
+  int e = 0;
+  for (int i = 1; i < 256 && e < numErrors; i++) {
     // cout << "errorLocator(" << i << ") == " << errorLocator->evaluateAt(i) << "\n";
     if (errorLocator->evaluateAt(i) == 0) {
       result[e] = field.inverse(i);
@@ -3747,12 +3747,12 @@ ArrayRef<int> ReedSolomonDecoder::findErrorLocations(Ref<GF256Poly> errorLocator
 
 ArrayRef<int> ReedSolomonDecoder::findErrorMagnitudes(Ref<GF256Poly> errorEvaluator, ArrayRef<int> errorLocations, bool dataMatrix) {
   // This is directly applying Forney's Formula
-  long s = errorLocations.size();
+  int s = errorLocations.size();
   ArrayRef<int> result(s);
-  for (long i = 0; i < s; i++) {
-    long xiInverse = field.inverse(errorLocations[i]);
-    long denominator = 1;
-    for (long j = 0; j < s; j++) {
+  for (int i = 0; i < s; i++) {
+    int xiInverse = field.inverse(errorLocations[i]);
+    int denominator = 1;
+    for (int j = 0; j < s; j++) {
       if (i != j) {
         denominator = field.multiply(denominator, GF256::addOrSubtract(1, field.multiply(errorLocations[j],
                                      xiInverse)));
@@ -3918,28 +3918,28 @@ namespace zxing {
 namespace datamatrix {
 using namespace std;
 
-ECB::ECB(long count, long dataCodewords) :
+ECB::ECB(int count, int dataCodewords) :
     count_(count), dataCodewords_(dataCodewords) {
 }
 
-long ECB::getCount() {
+int ECB::getCount() {
   return count_;
 }
 
-long ECB::getDataCodewords() {
+int ECB::getDataCodewords() {
   return dataCodewords_;
 }
 
-ECBlocks::ECBlocks(long ecCodewords, ECB *ecBlocks) :
+ECBlocks::ECBlocks(int ecCodewords, ECB *ecBlocks) :
     ecCodewords_(ecCodewords), ecBlocks_(1, ecBlocks) {
 }
 
-ECBlocks::ECBlocks(long ecCodewords, ECB *ecBlocks1, ECB *ecBlocks2) :
+ECBlocks::ECBlocks(int ecCodewords, ECB *ecBlocks1, ECB *ecBlocks2) :
     ecCodewords_(ecCodewords), ecBlocks_(1, ecBlocks1) {
   ecBlocks_.push_back(ecBlocks2);
 }
 
-long ECBlocks::getECCodewords() {
+int ECBlocks::getECCodewords() {
   return ecCodewords_;
 }
 
@@ -3954,18 +3954,18 @@ ECBlocks::~ECBlocks() {
 }
 
 vector<Ref<Version> > Version::VERSIONS;
-static long N_VERSIONS = Version::buildVersions();
+static int N_VERSIONS = Version::buildVersions();
 
-Version::Version(long versionNumber, long symbolSizeRows, long symbolSizeColumns, long dataRegionSizeRows,
-		long dataRegionSizeColumns, ECBlocks* ecBlocks) : versionNumber_(versionNumber),
+Version::Version(int versionNumber, int symbolSizeRows, int symbolSizeColumns, int dataRegionSizeRows,
+		int dataRegionSizeColumns, ECBlocks* ecBlocks) : versionNumber_(versionNumber),
 		symbolSizeRows_(symbolSizeRows), symbolSizeColumns_(symbolSizeColumns),
 		dataRegionSizeRows_(dataRegionSizeRows), dataRegionSizeColumns_(dataRegionSizeColumns),
 		ecBlocks_(ecBlocks), totalCodewords_(0) {
     // Calculate the total number of codewords
-    long total = 0;
-    long ecCodewords = ecBlocks_->getECCodewords();
+    int total = 0;
+    int ecCodewords = ecBlocks_->getECCodewords();
     vector<ECB*> &ecbArray = ecBlocks_->getECBlocks();
-    for (unsigned long i = 0; i < ecbArray.size(); i++) {
+    for (unsigned int i = 0; i < ecbArray.size(); i++) {
       ECB *ecBlock = ecbArray[i];
       total += ecBlock->getCount() * (ecBlock->getDataCodewords() + ecCodewords);
     }
@@ -3976,27 +3976,27 @@ Version::~Version() {
     delete ecBlocks_;
 }
 
-long Version::getVersionNumber() {
+int Version::getVersionNumber() {
   return versionNumber_;
 }
 
-long Version::getSymbolSizeRows() {
+int Version::getSymbolSizeRows() {
   return symbolSizeRows_;
 }
 
-long Version::getSymbolSizeColumns() {
+int Version::getSymbolSizeColumns() {
   return symbolSizeColumns_;
 }
 
-long Version::getDataRegionSizeRows() {
+int Version::getDataRegionSizeRows() {
   return dataRegionSizeRows_;
 }
 
-long Version::getDataRegionSizeColumns() {
+int Version::getDataRegionSizeColumns() {
   return dataRegionSizeColumns_;
 }
 
-long Version::getTotalCodewords() {
+int Version::getTotalCodewords() {
   return totalCodewords_;
 }
 
@@ -4004,7 +4004,7 @@ ECBlocks* Version::getECBlocks() {
   return ecBlocks_;
 }
 
-Ref<Version> Version::getVersionForDimensions(long numRows, long numColumns) {
+Ref<Version> Version::getVersionForDimensions(int numRows, int numColumns) {
     if ((numRows & 0x01) != 0 || (numColumns & 0x01) != 0) {
       throw ReaderException("Number of rows and columns must be even");
     }
@@ -4012,7 +4012,7 @@ Ref<Version> Version::getVersionForDimensions(long numRows, long numColumns) {
     // TODO(bbrown): This is doing a linear search through the array of versions.
     // If we interleave the rectangular versions with the square versions we could
     // do a binary search.
-    for (long i = 0; i < N_VERSIONS; ++i){
+    for (int i = 0; i < N_VERSIONS; ++i){
       Ref<Version> version(VERSIONS[i]);
       if (version->getSymbolSizeRows() == numRows && version->getSymbolSizeColumns() == numColumns) {
         return version;
@@ -4024,7 +4024,7 @@ Ref<Version> Version::getVersionForDimensions(long numRows, long numColumns) {
 /**
  * See ISO 16022:2006 5.5.1 Table 7
  */
-long Version::buildVersions() {
+int Version::buildVersions() {
   VERSIONS.push_back(Ref<Version>(new Version(1, 10, 10, 8, 8,
             					  new ECBlocks(5, new ECB(1, 3)))));
   VERSIONS.push_back(Ref<Version>(new Version(2, 12, 12, 10, 10,
@@ -4120,7 +4120,7 @@ long Version::buildVersions() {
 namespace zxing {
 namespace datamatrix {
 
-long BitMatrixParser::copyBit(size_t x, size_t y, long versionBits) {
+int BitMatrixParser::copyBit(size_t x, size_t y, int versionBits) {
   return bitMatrix_->get(x, y) ? (versionBits << 1) | 0x1 : versionBits << 1;
 }
 
@@ -4141,8 +4141,8 @@ Ref<Version> BitMatrixParser::readVersion(Ref<BitMatrix> bitMatrix) {
     return parsedVersion_;
   }
 
-  long numRows = bitMatrix->getHeight();//getDimension();
-  long numColumns = bitMatrix->getWidth();//numRows;
+  int numRows = bitMatrix->getHeight();//getDimension();
+  int numColumns = bitMatrix->getWidth();//numRows;
 
   Ref<Version> version = parsedVersion_->getVersionForDimensions(numRows, numColumns);
   if (version != 0) {
@@ -4153,12 +4153,12 @@ Ref<Version> BitMatrixParser::readVersion(Ref<BitMatrix> bitMatrix) {
 
 ArrayRef<unsigned char> BitMatrixParser::readCodewords() {
   	ArrayRef<unsigned char> result(parsedVersion_->getTotalCodewords());
-  	long resultOffset = 0;
-    long row = 4;
-    long column = 0;
+  	int resultOffset = 0;
+    int row = 4;
+    int column = 0;
 
-    long numRows = bitMatrix_->getHeight();
-    long numColumns = bitMatrix_->getWidth();
+    int numRows = bitMatrix_->getHeight();
+    int numColumns = bitMatrix_->getWidth();
 
     bool corner1Read = false;
     bool corner2Read = false;
@@ -4219,7 +4219,7 @@ ArrayRef<unsigned char> BitMatrixParser::readCodewords() {
     return result;
 }
 
-bool BitMatrixParser::readModule(long row, long column, long numRows, long numColumns) {
+bool BitMatrixParser::readModule(int row, int column, int numRows, int numColumns) {
     // Adjust the row and column indices based on boundary wrapping
     if (row < 0) {
       row += numRows;
@@ -4233,8 +4233,8 @@ bool BitMatrixParser::readModule(long row, long column, long numRows, long numCo
     return bitMatrix_->get(column, row);
   }
 
-long BitMatrixParser::readUtah(long row, long column, long numRows, long numColumns) {
-    long currentByte = 0;
+int BitMatrixParser::readUtah(int row, int column, int numRows, int numColumns) {
+    int currentByte = 0;
     if (readModule(row - 2, column - 2, numRows, numColumns)) {
       currentByte |= 1;
     }
@@ -4269,8 +4269,8 @@ long BitMatrixParser::readUtah(long row, long column, long numRows, long numColu
     return currentByte;
   }
 
-long BitMatrixParser::readCorner1(long numRows, long numColumns) {
-    long currentByte = 0;
+int BitMatrixParser::readCorner1(int numRows, int numColumns) {
+    int currentByte = 0;
     if (readModule(numRows - 1, 0, numRows, numColumns)) {
       currentByte |= 1;
     }
@@ -4305,8 +4305,8 @@ long BitMatrixParser::readCorner1(long numRows, long numColumns) {
     return currentByte;
   }
 
-long BitMatrixParser::readCorner2(long numRows, long numColumns) {
-    long currentByte = 0;
+int BitMatrixParser::readCorner2(int numRows, int numColumns) {
+    int currentByte = 0;
     if (readModule(numRows - 3, 0, numRows, numColumns)) {
       currentByte |= 1;
     }
@@ -4341,8 +4341,8 @@ long BitMatrixParser::readCorner2(long numRows, long numColumns) {
     return currentByte;
   }
 
-long BitMatrixParser::readCorner3(long numRows, long numColumns) {
-    long currentByte = 0;
+int BitMatrixParser::readCorner3(int numRows, int numColumns) {
+    int currentByte = 0;
     if (readModule(numRows - 1, 0, numRows, numColumns)) {
       currentByte |= 1;
     }
@@ -4377,8 +4377,8 @@ long BitMatrixParser::readCorner3(long numRows, long numColumns) {
     return currentByte;
   }
 
-long BitMatrixParser::readCorner4(long numRows, long numColumns) {
-    long currentByte = 0;
+int BitMatrixParser::readCorner4(int numRows, int numColumns) {
+    int currentByte = 0;
     if (readModule(numRows - 3, 0, numRows, numColumns)) {
       currentByte |= 1;
     }
@@ -4414,34 +4414,34 @@ long BitMatrixParser::readCorner4(long numRows, long numColumns) {
   }
 
 Ref<BitMatrix> BitMatrixParser::extractDataRegion(Ref<BitMatrix> bitMatrix) {
-    long symbolSizeRows = parsedVersion_->getSymbolSizeRows();
-    long symbolSizeColumns = parsedVersion_->getSymbolSizeColumns();
+    int symbolSizeRows = parsedVersion_->getSymbolSizeRows();
+    int symbolSizeColumns = parsedVersion_->getSymbolSizeColumns();
 
     if ((int)bitMatrix->getHeight() != symbolSizeRows) {
       throw IllegalArgumentException("Dimension of bitMatrix must match the version size");
     }
 
-    long dataRegionSizeRows = parsedVersion_->getDataRegionSizeRows();
-    long dataRegionSizeColumns = parsedVersion_->getDataRegionSizeColumns();
+    int dataRegionSizeRows = parsedVersion_->getDataRegionSizeRows();
+    int dataRegionSizeColumns = parsedVersion_->getDataRegionSizeColumns();
 
-    long numDataRegionsRow = symbolSizeRows / dataRegionSizeRows;
-    long numDataRegionsColumn = symbolSizeColumns / dataRegionSizeColumns;
+    int numDataRegionsRow = symbolSizeRows / dataRegionSizeRows;
+    int numDataRegionsColumn = symbolSizeColumns / dataRegionSizeColumns;
 
-    long sizeDataRegionRow = numDataRegionsRow * dataRegionSizeRows;
-    long sizeDataRegionColumn = numDataRegionsColumn * dataRegionSizeColumns;
+    int sizeDataRegionRow = numDataRegionsRow * dataRegionSizeRows;
+    int sizeDataRegionColumn = numDataRegionsColumn * dataRegionSizeColumns;
 
     Ref<BitMatrix> bitMatrixWithoutAlignment(new BitMatrix(sizeDataRegionColumn, sizeDataRegionRow));
-    for (long dataRegionRow = 0; dataRegionRow < numDataRegionsRow; ++dataRegionRow) {
-      long dataRegionRowOffset = dataRegionRow * dataRegionSizeRows;
-      for (long dataRegionColumn = 0; dataRegionColumn < numDataRegionsColumn; ++dataRegionColumn) {
-        long dataRegionColumnOffset = dataRegionColumn * dataRegionSizeColumns;
-        for (long i = 0; i < dataRegionSizeRows; ++i) {
-          long readRowOffset = dataRegionRow * (dataRegionSizeRows + 2) + 1 + i;
-          long writeRowOffset = dataRegionRowOffset + i;
-          for (long j = 0; j < dataRegionSizeColumns; ++j) {
-            long readColumnOffset = dataRegionColumn * (dataRegionSizeColumns + 2) + 1 + j;
+    for (int dataRegionRow = 0; dataRegionRow < numDataRegionsRow; ++dataRegionRow) {
+      int dataRegionRowOffset = dataRegionRow * dataRegionSizeRows;
+      for (int dataRegionColumn = 0; dataRegionColumn < numDataRegionsColumn; ++dataRegionColumn) {
+        int dataRegionColumnOffset = dataRegionColumn * dataRegionSizeColumns;
+        for (int i = 0; i < dataRegionSizeRows; ++i) {
+          int readRowOffset = dataRegionRow * (dataRegionSizeRows + 2) + 1 + i;
+          int writeRowOffset = dataRegionRowOffset + i;
+          for (int j = 0; j < dataRegionSizeColumns; ++j) {
+            int readColumnOffset = dataRegionColumn * (dataRegionSizeColumns + 2) + 1 + j;
             if (bitMatrix->get(readColumnOffset, readRowOffset)) {
-              long writeColumnOffset = dataRegionColumnOffset + j;
+              int writeColumnOffset = dataRegionColumnOffset + j;
               bitMatrixWithoutAlignment->set(writeColumnOffset, writeRowOffset);
             }
           }
@@ -4484,11 +4484,11 @@ namespace datamatrix {
 
 using namespace std;
 
-DataBlock::DataBlock(long numDataCodewords, ArrayRef<unsigned char> codewords) :
+DataBlock::DataBlock(int numDataCodewords, ArrayRef<unsigned char> codewords) :
     numDataCodewords_(numDataCodewords), codewords_(codewords) {
 }
 
-long DataBlock::getNumDataCodewords() {
+int DataBlock::getNumDataCodewords() {
   return numDataCodewords_;
 }
 
@@ -4502,7 +4502,7 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
   ECBlocks* ecBlocks = version->getECBlocks();
 
   // First count the total number of data blocks
-  long totalBlocks = 0;
+  int totalBlocks = 0;
   vector<ECB*> ecBlockArray = ecBlocks->getECBlocks();
   for (size_t i = 0; i < ecBlockArray.size(); i++) {
     totalBlocks += ecBlockArray[i]->getCount();
@@ -4510,12 +4510,12 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
 
   // Now establish DataBlocks of the appropriate size and number of data codewords
   std::vector<Ref<DataBlock> > result(totalBlocks);
-  long numResultBlocks = 0;
+  int numResultBlocks = 0;
   for (size_t j = 0; j < ecBlockArray.size(); j++) {
     ECB *ecBlock = ecBlockArray[j];
-    for (long i = 0; i < ecBlock->getCount(); i++) {
-      long numDataCodewords = ecBlock->getDataCodewords();
-      long numBlockCodewords = ecBlocks->getECCodewords() + numDataCodewords;
+    for (int i = 0; i < ecBlock->getCount(); i++) {
+      int numDataCodewords = ecBlock->getDataCodewords();
+      int numBlockCodewords = ecBlocks->getECCodewords() + numDataCodewords;
       ArrayRef<unsigned char> buffer(numBlockCodewords);
       Ref<DataBlock> blockRef(new DataBlock(numDataCodewords, buffer));
       result[numResultBlocks++] = blockRef;
@@ -4524,10 +4524,10 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
 
   // All blocks have the same amount of data, except that the last n
   // (where n may be 0) have 1 more byte. Figure out where these start.
-  long shorterBlocksTotalCodewords = result[0]->codewords_.size();
-  long longerBlocksStartAt = result.size() - 1;
+  int shorterBlocksTotalCodewords = result[0]->codewords_.size();
+  int longerBlocksStartAt = result.size() - 1;
   while (longerBlocksStartAt >= 0) {
-    long numCodewords = result[longerBlocksStartAt]->codewords_.size();
+    int numCodewords = result[longerBlocksStartAt]->codewords_.size();
     if (numCodewords == shorterBlocksTotalCodewords) {
       break;
     }
@@ -4538,24 +4538,24 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
   }
   longerBlocksStartAt++;
 
-  long shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks->getECCodewords();
+  int shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks->getECCodewords();
   // The last elements of result may be 1 element longer;
   // first fill out as many elements as all of them have
-  long rawCodewordsOffset = 0;
-  for (long i = 0; i < shorterBlocksNumDataCodewords; i++) {
-    for (long j = 0; j < numResultBlocks; j++) {
+  int rawCodewordsOffset = 0;
+  for (int i = 0; i < shorterBlocksNumDataCodewords; i++) {
+    for (int j = 0; j < numResultBlocks; j++) {
       result[j]->codewords_[i] = rawCodewords[rawCodewordsOffset++];
     }
   }
   // Fill out the last data block in the longer ones
-  for (long j = longerBlocksStartAt; j < numResultBlocks; j++) {
+  for (int j = longerBlocksStartAt; j < numResultBlocks; j++) {
     result[j]->codewords_[shorterBlocksNumDataCodewords] = rawCodewords[rawCodewordsOffset++];
   }
   // Now add in error correction blocks
-  long max = result[0]->codewords_.size();
-  for (long i = shorterBlocksNumDataCodewords; i < max; i++) {
-    for (long j = 0; j < numResultBlocks; j++) {
-      long iOffset = j < longerBlocksStartAt ? i : i + 1;
+  int max = result[0]->codewords_.size();
+  for (int i = shorterBlocksNumDataCodewords; i < max; i++) {
+    for (int j = 0; j < numResultBlocks; j++) {
+      int iOffset = j < longerBlocksStartAt ? i : i + 1;
       result[j]->codewords_[iOffset] = rawCodewords[rawCodewordsOffset++];
     }
   }
@@ -4629,7 +4629,7 @@ Ref<DecoderResult> DecodedBitStreamParser::decode(ArrayRef<unsigned char> bytes)
   ostringstream result;
   ostringstream resultTrailer;
   vector<unsigned char> byteSegments;
-  long mode = ASCII_ENCODE;
+  int mode = ASCII_ENCODE;
   do {
     if (mode == ASCII_ENCODE) {
       mode = decodeAsciiSegment(bits, result, resultTrailer);
@@ -4665,11 +4665,11 @@ Ref<DecoderResult> DecodedBitStreamParser::decode(ArrayRef<unsigned char> bytes)
   return Ref<DecoderResult>(new DecoderResult(rawBytes, text));
 }
 
-long DecodedBitStreamParser::decodeAsciiSegment(Ref<BitSource> bits, ostringstream & result,
+int DecodedBitStreamParser::decodeAsciiSegment(Ref<BitSource> bits, ostringstream & result,
   ostringstream & resultTrailer) {
   bool upperShift = false;
   do {
-    long oneByte = bits->readBits(8);
+    int oneByte = bits->readBits(8);
     if (oneByte == 0) {
       throw FormatException("Not enough bits to decode");
     } else if (oneByte <= 128) {  // ASCII data (ASCII value + 1)
@@ -4680,7 +4680,7 @@ long DecodedBitStreamParser::decodeAsciiSegment(Ref<BitSource> bits, ostringstre
     } else if (oneByte == 129) {  // Pad
       return PAD_ENCODE;
     } else if (oneByte <= 229) {  // 2-digit data 00-99 (Numeric Value + 130)
-      long value = oneByte - 130;
+      int value = oneByte - 130;
       if (value < 10) { // padd with '0' for single digit values
         result << '0';
       }
@@ -4732,21 +4732,21 @@ void DecodedBitStreamParser::decodeC40Segment(Ref<BitSource> bits, ostringstream
   bool upperShift = false;
 
   int* cValues = new int[3];
-  long shift = 0;
+  int shift = 0;
   do {
     // If there is only one byte left then it will be encoded as ASCII
     if (bits->available() == 8) {
       return;
     }
-    long firstByte = bits->readBits(8);
+    int firstByte = bits->readBits(8);
     if (firstByte == 254) {  // Unlatch codeword
       return;
     }
 
     parseTwoBytes(firstByte, bits->readBits(8), cValues);
 
-    for (long i = 0; i < 3; i++) {
-      long cValue = cValues[i];
+    for (int i = 0; i < 3; i++) {
+      int cValue = cValues[i];
       switch (shift) {
         case 0:
           if (cValue < 3) {
@@ -4809,21 +4809,21 @@ void DecodedBitStreamParser::decodeTextSegment(Ref<BitSource> bits, ostringstrea
   bool upperShift = false;
 
   int* cValues = new int[3];
-  long shift = 0;
+  int shift = 0;
   do {
     // If there is only one byte left then it will be encoded as ASCII
     if (bits->available() == 8) {
       return;
     }
-    long firstByte = bits->readBits(8);
+    int firstByte = bits->readBits(8);
     if (firstByte == 254) {  // Unlatch codeword
       return;
     }
 
     parseTwoBytes(firstByte, bits->readBits(8), cValues);
 
-    for (long i = 0; i < 3; i++) {
-      long cValue = cValues[i];
+    for (int i = 0; i < 3; i++) {
+      int cValue = cValues[i];
       switch (shift) {
         case 0:
           if (cValue < 3) {
@@ -4890,15 +4890,15 @@ void DecodedBitStreamParser::decodeAnsiX12Segment(Ref<BitSource> bits, ostringst
     if (bits->available() == 8) {
       return;
     }
-    long firstByte = bits->readBits(8);
+    int firstByte = bits->readBits(8);
     if (firstByte == 254) {  // Unlatch codeword
       return;
     }
 
     parseTwoBytes(firstByte, bits->readBits(8), cValues);
 
-    for (long i = 0; i < 3; i++) {
-      long cValue = cValues[i];
+    for (int i = 0; i < 3; i++) {
+      int cValue = cValues[i];
       if (cValue == 0) {  // X12 segment terminator <CR>
         result << '\r';
       } else if (cValue == 1) {  // X12 segment separator *
@@ -4918,9 +4918,9 @@ void DecodedBitStreamParser::decodeAnsiX12Segment(Ref<BitSource> bits, ostringst
   } while (bits->available() > 0);
 }
 
-void DecodedBitStreamParser::parseTwoBytes(long firstByte, long secondByte, int*& result) {
-  long fullBitValue = (firstByte << 8) + secondByte - 1;
-  long temp = fullBitValue / 1600;
+void DecodedBitStreamParser::parseTwoBytes(int firstByte, int secondByte, int*& result) {
+  int fullBitValue = (firstByte << 8) + secondByte - 1;
+  int temp = fullBitValue / 1600;
   result[0] = temp;
   fullBitValue -= temp * 1600;
   temp = fullBitValue / 40;
@@ -4936,8 +4936,8 @@ void DecodedBitStreamParser::decodeEdifactSegment(Ref<BitSource> bits, ostringst
       return;
     }
 
-    for (long i = 0; i < 4; i++) {
-      long edifactValue = bits->readBits(6);
+    for (int i = 0; i < 4; i++) {
+      int edifactValue = bits->readBits(6);
 
       // Check for the unlatch character
       if (edifactValue == 0x2B67) {  // 011111
@@ -4958,9 +4958,9 @@ void DecodedBitStreamParser::decodeEdifactSegment(Ref<BitSource> bits, ostringst
 
 void DecodedBitStreamParser::decodeBase256Segment(Ref<BitSource> bits, ostringstream& result, vector<unsigned char> byteSegments) {
   // Figure out how long the Base 256 Segment is.
-  long codewordPosition = 1 + bits->getByteOffset(); // position is 1-indexed
-  long d1 = unrandomize255State(bits->readBits(8), codewordPosition++);
-  long count;
+  int codewordPosition = 1 + bits->getByteOffset(); // position is 1-indexed
+  int d1 = unrandomize255State(bits->readBits(8), codewordPosition++);
+  int count;
   if (d1 == 0) {  // Read the remainder of the symbol
     count = bits->available() / 8;
   } else if (d1 < 250) {
@@ -4975,7 +4975,7 @@ void DecodedBitStreamParser::decodeBase256Segment(Ref<BitSource> bits, ostringst
   }
 
   unsigned char* bytes = new unsigned char[count];
-  for (long i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     // Have seen this particular error in the wild, such as at
     // http://www.bcgen.com/demo/IDAutomationStreamingDataMatrix.aspx?MODE=3&D=Fred&PFMT=3&PT=F&X=0.3&O=0&LM=0.2
     if (bits->available() < 8) {
@@ -5030,13 +5030,13 @@ Decoder::Decoder() :
 }
 
 
-void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, long numDataCodewords) {
-  long numCodewords = codewordBytes->size();
+void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, int numDataCodewords) {
+  int numCodewords = codewordBytes->size();
   ArrayRef<int> codewordInts(numCodewords);
-  for (long i = 0; i < numCodewords; i++) {
+  for (int i = 0; i < numCodewords; i++) {
     codewordInts[i] = codewordBytes[i] & 0xff;
   }
-  long numECCodewords = numCodewords - numDataCodewords;
+  int numECCodewords = numCodewords - numDataCodewords;
   try {
     rsDecoder_.decode(codewordInts, numECCodewords);
   } catch (ReedSolomonException const& ex) {
@@ -5045,7 +5045,7 @@ void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, long numDataC
   }
   // Copy back into array of bytes -- only need to worry about the bytes that were data
   // We don't care about errors in the error-correction codewords
-  for (long i = 0; i < numDataCodewords; i++) {
+  for (int i = 0; i < numDataCodewords; i++) {
     codewordBytes[i] = (unsigned char)codewordInts[i];
   }
 }
@@ -5060,22 +5060,22 @@ Ref<DecoderResult> Decoder::decode(Ref<BitMatrix> bits) {
   // Separate into data blocks
   std::vector<Ref<DataBlock> > dataBlocks = DataBlock::getDataBlocks(codewords, version);
 
-  long dataBlocksCount = dataBlocks.size();
+  int dataBlocksCount = dataBlocks.size();
 
   // Count total number of data bytes
-  long totalBytes = 0;
-  for (long i = 0; i < dataBlocksCount; i++) {
+  int totalBytes = 0;
+  for (int i = 0; i < dataBlocksCount; i++) {
     totalBytes += dataBlocks[i]->getNumDataCodewords();
   }
   ArrayRef<unsigned char> resultBytes(totalBytes);
 
   // Error-correct and copy data blocks together into a stream of bytes
-  for (long j = 0; j < dataBlocksCount; j++) {
+  for (int j = 0; j < dataBlocksCount; j++) {
     Ref<DataBlock> dataBlock(dataBlocks[j]);
     ArrayRef<unsigned char> codewordBytes = dataBlock->getCodewords();
-    long numDataCodewords = dataBlock->getNumDataCodewords();
+    int numDataCodewords = dataBlock->getNumDataCodewords();
     correctErrors(codewordBytes, numDataCodewords);
-    for (long i = 0; i < numDataCodewords; i++) {
+    for (int i = 0; i < numDataCodewords; i++) {
       // De-interlace data blocks.
       resultBytes[i * dataBlocksCount + j] = codewordBytes[i];
     }
@@ -5121,7 +5121,7 @@ namespace zxing {
 		  ResultPoint(posX,posY), counter_(0) {
 		}
 
-		long CornerPoint::getCount() const {
+		int CornerPoint::getCount() const {
 			return counter_;
 		}
 
@@ -5179,7 +5179,7 @@ ResultPointsAndTransitions::ResultPointsAndTransitions() {
 }
 
 ResultPointsAndTransitions::ResultPointsAndTransitions(Ref<ResultPoint> from, Ref<ResultPoint> to,
-    long transitions)
+    int transitions)
     : to_(to), from_(from), transitions_(transitions) {
 }
 
@@ -5191,7 +5191,7 @@ Ref<ResultPoint> ResultPointsAndTransitions::getTo() {
   return to_;
 }
 
-long ResultPointsAndTransitions::getTransitions() {
+int ResultPointsAndTransitions::getTransitions() {
   return transitions_;
 }
 
@@ -5211,7 +5211,7 @@ Ref<DetectorResult> Detector::detect() {
   Ref<ResultPoint> pointC = ResultPoints[2];
   Ref<ResultPoint> pointD = ResultPoints[3];
 
-  // Polong A and D are across the diagonal from one another,
+  // Point A and D are across the diagonal from one another,
   // as are B and C. Figure out which are the solid black lines
   // by counting transitions
   std::vector<Ref<ResultPointsAndTransitions> > transitions(4);
@@ -5226,7 +5226,7 @@ Ref<DetectorResult> Detector::detect() {
   Ref<ResultPointsAndTransitions> lSideOne(transitions[0]);
   Ref<ResultPointsAndTransitions> lSideTwo(transitions[1]);
 
-  // Figure out which polong is their intersection by tallying up the number of times we see the
+  // Figure out which point is their intersection by tallying up the number of times we see the
   // endpoints in the four endpoints. One will show up twice.
   Ref<ResultPoint> maybeTopLeft;
   Ref<ResultPoint> bottomLeft;
@@ -5271,7 +5271,7 @@ Ref<DetectorResult> Detector::detect() {
   bottomLeft = corners[1];
   Ref<ResultPoint> topLeft(corners[2]);
 
-  // Which polong didn't we find in relation to the "L" sides? that's the top right corner
+  // Which point didn't we find in relation to the "L" sides? that's the top right corner
   Ref<ResultPoint> topRight;
   if (!(pointA->equals(bottomRight) || pointA->equals(bottomLeft) || pointA->equals(topLeft))) {
     topRight = pointA;
@@ -5290,12 +5290,12 @@ Ref<DetectorResult> Detector::detect() {
   // equal to 1 less than the code dimension. Well, actually 2 less, because we are going to
   // end on a black module:
 
-  // The top right polong is actually the corner of a module, which is one of the two black modules
+  // The top right point is actually the corner of a module, which is one of the two black modules
   // adjacent to the white module at the top right. Tracing to that corner from either the top left
   // or bottom right should work here.
 
-  long dimensionTop = transitionsBetween(topLeft, topRight)->getTransitions();
-  long dimensionRight = transitionsBetween(bottomRight, topRight)->getTransitions();
+  int dimensionTop = transitionsBetween(topLeft, topRight)->getTransitions();
+  int dimensionRight = transitionsBetween(bottomRight, topRight)->getTransitions();
 
   //dimensionTop++;
   if ((dimensionTop & 0x01) == 1) {
@@ -5346,16 +5346,16 @@ Ref<DetectorResult> Detector::detect() {
 
   } else {
     // The matrix is square
-    long dimension = min(dimensionRight, dimensionTop);
+    int dimension = min(dimensionRight, dimensionTop);
 
-    // correct top right polong to match the white module
+    // correct top right point to match the white module
     correctedTopRight = correctTopRight(bottomLeft, bottomRight, topLeft, topRight, dimension);
     if (correctedTopRight == NULL) {
       correctedTopRight = topRight;
     }
 
     // Redetermine the dimension using the corrected top right point
-    long dimensionCorrected = max(transitionsBetween(topLeft, correctedTopRight)->getTransitions(),
+    int dimensionCorrected = max(transitionsBetween(topLeft, correctedTopRight)->getTransitions(),
         transitionsBetween(bottomRight, correctedTopRight)->getTransitions());
     dimensionCorrected++;
     if ((dimensionCorrected & 0x01) == 1) {
@@ -5382,10 +5382,10 @@ Ref<DetectorResult> Detector::detect() {
  */
 Ref<ResultPoint> Detector::correctTopRightRectangular(Ref<ResultPoint> bottomLeft,
     Ref<ResultPoint> bottomRight, Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight,
-    long dimensionTop, long dimensionRight) {
+    int dimensionTop, int dimensionRight) {
 
   float corr = distance(bottomLeft, bottomRight) / (float) dimensionTop;
-  long norm = distance(topLeft, topRight);
+  int norm = distance(topLeft, topRight);
   float cos = (topRight->getX() - topLeft->getX()) / norm;
   float sin = (topRight->getY() - topLeft->getY()) / norm;
 
@@ -5410,9 +5410,9 @@ Ref<ResultPoint> Detector::correctTopRightRectangular(Ref<ResultPoint> bottomLef
     return c1;
   }
 
-  long l1 = abs(dimensionTop - transitionsBetween(topLeft, c1)->getTransitions())
+  int l1 = abs(dimensionTop - transitionsBetween(topLeft, c1)->getTransitions())
       + abs(dimensionRight - transitionsBetween(bottomRight, c1)->getTransitions());
-  long l2 = abs(dimensionTop - transitionsBetween(topLeft, c2)->getTransitions())
+  int l2 = abs(dimensionTop - transitionsBetween(topLeft, c2)->getTransitions())
       + abs(dimensionRight - transitionsBetween(bottomRight, c2)->getTransitions());
 
   return l1 <= l2 ? c1 : c2;
@@ -5424,10 +5424,10 @@ Ref<ResultPoint> Detector::correctTopRightRectangular(Ref<ResultPoint> bottomLef
  */
 Ref<ResultPoint> Detector::correctTopRight(Ref<ResultPoint> bottomLeft,
     Ref<ResultPoint> bottomRight, Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight,
-    long dimension) {
+    int dimension) {
 
   float corr = distance(bottomLeft, bottomRight) / (float) dimension;
-  long norm = distance(topLeft, topRight);
+  int norm = distance(topLeft, topRight);
   float cos = (topRight->getX() - topLeft->getX()) / norm;
   float sin = (topRight->getY() - topLeft->getY()) / norm;
 
@@ -5452,10 +5452,10 @@ Ref<ResultPoint> Detector::correctTopRight(Ref<ResultPoint> bottomLeft,
     return c1;
   }
 
-  long l1 = abs(
+  int l1 = abs(
       transitionsBetween(topLeft, c1)->getTransitions()
           - transitionsBetween(bottomRight, c1)->getTransitions());
-  long l2 = abs(
+  int l2 = abs(
       transitionsBetween(topLeft, c2)->getTransitions()
           - transitionsBetween(bottomRight, c2)->getTransitions());
 
@@ -5468,7 +5468,7 @@ bool Detector::isValid(Ref<ResultPoint> p) {
 }
 
 // L2 distance
-long Detector::distance(Ref<ResultPoint> a, Ref<ResultPoint> b) {
+int Detector::distance(Ref<ResultPoint> a, Ref<ResultPoint> b) {
   return round(
       (float) sqrt(
           (double) (a->getX() - b->getX()) * (a->getX() - b->getX())
@@ -5478,13 +5478,13 @@ long Detector::distance(Ref<ResultPoint> a, Ref<ResultPoint> b) {
 Ref<ResultPointsAndTransitions> Detector::transitionsBetween(Ref<ResultPoint> from,
     Ref<ResultPoint> to) {
   // See QR Code Detector, sizeOfBlackWhiteBlackRun()
-  long fromX = (int) from->getX();
-  long fromY = (int) from->getY();
-  long toX = (int) to->getX();
-  long toY = (int) to->getY();
+  int fromX = (int) from->getX();
+  int fromY = (int) from->getY();
+  int toX = (int) to->getX();
+  int toY = (int) to->getY();
   bool steep = abs(toY - fromY) > abs(toX - fromX);
   if (steep) {
-    long temp = fromX;
+    int temp = fromX;
     fromX = fromY;
     fromY = temp;
     temp = toX;
@@ -5492,14 +5492,14 @@ Ref<ResultPointsAndTransitions> Detector::transitionsBetween(Ref<ResultPoint> fr
     toY = temp;
   }
 
-  long dx = abs(toX - fromX);
-  long dy = abs(toY - fromY);
-  long error = -dx >> 1;
-  long ystep = fromY < toY ? 1 : -1;
-  long xstep = fromX < toX ? 1 : -1;
-  long transitions = 0;
+  int dx = abs(toX - fromX);
+  int dy = abs(toY - fromY);
+  int error = -dx >> 1;
+  int ystep = fromY < toY ? 1 : -1;
+  int xstep = fromX < toX ? 1 : -1;
+  int transitions = 0;
   bool inBlack = image_->get(steep ? fromY : fromX, steep ? fromX : fromY);
-  for (long x = fromX, y = fromY; x != toX; x += xstep) {
+  for (int x = fromX, y = fromY; x != toX; x += xstep) {
     bool isBlack = image_->get(steep ? y : x, steep ? x : y);
     if (isBlack != inBlack) {
       transitions++;
@@ -5520,7 +5520,7 @@ Ref<ResultPointsAndTransitions> Detector::transitionsBetween(Ref<ResultPoint> fr
 
 Ref<PerspectiveTransform> Detector::createTransform(Ref<ResultPoint> topLeft,
     Ref<ResultPoint> topRight, Ref<ResultPoint> bottomLeft, Ref<ResultPoint> bottomRight,
-    long dimensionX, long dimensionY) {
+    int dimensionX, int dimensionY) {
 
   Ref<PerspectiveTransform> transform(
       PerspectiveTransform::quadrilateralToQuadrilateral(
@@ -5543,20 +5543,20 @@ Ref<PerspectiveTransform> Detector::createTransform(Ref<ResultPoint> topLeft,
   return transform;
 }
 
-Ref<BitMatrix> Detector::sampleGrid(Ref<BitMatrix> image, long dimensionX, long dimensionY,
+Ref<BitMatrix> Detector::sampleGrid(Ref<BitMatrix> image, int dimensionX, int dimensionY,
     Ref<PerspectiveTransform> transform) {
   GridSampler &sampler = GridSampler::getInstance();
   return sampler.sampleGrid(image, dimensionX, dimensionY, transform);
 }
 
 void Detector::insertionSort(std::vector<Ref<ResultPointsAndTransitions> > &vector) {
-  long max = vector.size();
+  int max = vector.size();
   bool swapped = true;
   Ref<ResultPointsAndTransitions> value;
   Ref<ResultPointsAndTransitions> valueB;
   do {
     swapped = false;
-    for (long i = 1; i < max; i++) {
+    for (int i = 1; i < max; i++) {
       value = vector[i - 1];
       if (compare(value, (valueB = vector[i])) > 0){
         swapped = true;
@@ -5567,7 +5567,7 @@ void Detector::insertionSort(std::vector<Ref<ResultPointsAndTransitions> > &vect
   } while (swapped);
 }
 
-long Detector::compare(Ref<ResultPointsAndTransitions> a, Ref<ResultPointsAndTransitions> b) {
+int Detector::compare(Ref<ResultPointsAndTransitions> a, Ref<ResultPointsAndTransitions> b) {
   return a->getTransitions() - b->getTransitions();
 }
 }
@@ -5629,17 +5629,17 @@ namespace zxing {
 namespace datamatrix {
 
 std::vector<Ref<CornerPoint> > MonochromeRectangleDetector::detect() {
-    long height = image_->getHeight();
-    long width = image_->getWidth();
-    long halfHeight = height >> 1;
-    long halfWidth = width >> 1;
-    long deltaY = max(1, height / (MAX_MODULES << 3));
-    long deltaX = max(1, width / (MAX_MODULES << 3));
+    int height = image_->getHeight();
+    int width = image_->getWidth();
+    int halfHeight = height >> 1;
+    int halfWidth = width >> 1;
+    int deltaY = max(1, height / (MAX_MODULES << 3));
+    int deltaX = max(1, width / (MAX_MODULES << 3));
 
-    long top = 0;
-    long bottom = height;
-    long left = 0;
-    long right = width;
+    int top = 0;
+    int bottom = height;
+    int left = 0;
+    int right = width;
     Ref<CornerPoint> pointA(findCornerFromCenter(halfWidth, 0, left, right,
         halfHeight, -deltaY, top, bottom, halfWidth >> 1));
     top = (int) pointA->getY() - 1;
@@ -5653,7 +5653,7 @@ std::vector<Ref<CornerPoint> > MonochromeRectangleDetector::detect() {
         halfHeight, deltaY, top, bottom, halfWidth >> 1));
     bottom = (int) pointD->getY() + 1;
 
-    // Go try to find polong A again with better information -- might have been off at first.
+    // Go try to find point A again with better information -- might have been off at first.
     pointA.reset(findCornerFromCenter(halfWidth, 0, left, right,
         halfHeight, -deltaY, top, bottom, halfWidth >> 2));
 	  std::vector<Ref<CornerPoint> > corners(4);
@@ -5665,10 +5665,10 @@ std::vector<Ref<CornerPoint> > MonochromeRectangleDetector::detect() {
     return corners;
   }
 
-Ref<CornerPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX, long deltaX, long left, long right,
-      long centerY, long deltaY, long top, long bottom, long maxWhiteRun) {
+Ref<CornerPoint> MonochromeRectangleDetector::findCornerFromCenter(int centerX, int deltaX, int left, int right,
+      int centerY, int deltaY, int top, int bottom, int maxWhiteRun) {
 	Ref<TwoInts> lastRange(NULL);
-    for (long y = centerY, x = centerX;
+    for (int y = centerY, x = centerX;
          y < bottom && y >= top && x < right && x >= left;
          y += deltaY, x += deltaX) {
     Ref<TwoInts> range(NULL);
@@ -5685,7 +5685,7 @@ Ref<CornerPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
         } else {
         // lastRange was found
         if (deltaX == 0) {
-          long lastY = y - deltaY;
+          int lastY = y - deltaY;
           if (lastRange->start < centerX) {
             if (lastRange->end > centerX) {
               // straddle, choose one or the other based on direction
@@ -5699,7 +5699,7 @@ Ref<CornerPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
 			      return result;
             }
         } else {
-          long lastX = x - deltaX;
+          int lastX = x - deltaX;
           if (lastRange->start < centerY) {
             if (lastRange->end > centerY) {
 			        Ref<CornerPoint> result(new CornerPoint(lastX, deltaX < 0 ? lastRange->start : lastRange->end));
@@ -5719,23 +5719,23 @@ Ref<CornerPoint> MonochromeRectangleDetector::findCornerFromCenter(long centerX,
     throw ReaderException("Couldn't find corners");
   }
 
-Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(long fixedDimension, long maxWhiteRun, long minDim, long maxDim,
+Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(int fixedDimension, int maxWhiteRun, int minDim, int maxDim,
       bool horizontal) {
 
-	  long center = (minDim + maxDim) >> 1;
+	  int center = (minDim + maxDim) >> 1;
 
     // Scan left/up first
-    long start = center;
+    int start = center;
     while (start >= minDim) {
       if (horizontal ? image_->get(start, fixedDimension) : image_->get(fixedDimension, start)) {
         start--;
       } else {
-        long whiteRunStart = start;
+        int whiteRunStart = start;
         do {
           start--;
         } while (start >= minDim && !(horizontal ? image_->get(start, fixedDimension) :
             image_->get(fixedDimension, start)));
-        long whiteRunSize = whiteRunStart - start;
+        int whiteRunSize = whiteRunStart - start;
         if (start < minDim || whiteRunSize > maxWhiteRun) {
           start = whiteRunStart;
           break;
@@ -5745,17 +5745,17 @@ Ref<TwoInts> MonochromeRectangleDetector::blackWhiteRange(long fixedDimension, l
     start++;
 
     // Then try right/down
-    long end = center;
+    int end = center;
     while (end < maxDim) {
       if (horizontal ? image_->get(end, fixedDimension) : image_->get(fixedDimension, end)) {
         end++;
       } else {
-        long whiteRunStart = end;
+        int whiteRunStart = end;
         do {
           end++;
         } while (end < maxDim && !(horizontal ? image_->get(end, fixedDimension) :
             image_->get(fixedDimension, end)));
-        long whiteRunSize = end - whiteRunStart;
+        int whiteRunSize = end - whiteRunStart;
         if (end >= maxDim || whiteRunSize > maxWhiteRun) {
           end = whiteRunStart;
           break;
@@ -5807,10 +5807,10 @@ Ref<Result> ByQuadrantReader::decode(Ref<BinaryBitmap> image){
 }
 
 Ref<Result> ByQuadrantReader::decode(Ref<BinaryBitmap> image, DecodeHints hints){
-  long width = image->getWidth();
-  long height = image->getHeight();
-  long halfWidth = width / 2;
-  long halfHeight = height / 2;
+  int width = image->getWidth();
+  int height = image->getHeight();
+  int halfWidth = width / 2;
+  int halfHeight = height / 2;
   Ref<BinaryBitmap> topLeft = image->crop(0, 0, halfWidth, halfHeight);
   try {
     return delegate_.decode(topLeft, hints);
@@ -5839,8 +5839,8 @@ Ref<Result> ByQuadrantReader::decode(Ref<BinaryBitmap> image, DecodeHints hints)
     // continue
   }
 
-  long quarterWidth = halfWidth / 2;
-  long quarterHeight = halfHeight / 2;
+  int quarterWidth = halfWidth / 2;
+  int quarterHeight = halfHeight / 2;
   Ref<BinaryBitmap> center = image->crop(quarterWidth, quarterHeight, halfWidth, halfHeight);
   return delegate_.decode(center, hints);
 }
@@ -5891,7 +5891,7 @@ std::vector<Ref<Result> > GenericMultipleBarcodeReader::decodeMultiple(
 }
 
 void GenericMultipleBarcodeReader::doDecodeMultiple(Ref<BinaryBitmap> image,
-  DecodeHints hints, std::vector<Ref<Result> >& results, long xOffset, long yOffset)
+  DecodeHints hints, std::vector<Ref<Result> >& results, int xOffset, int yOffset)
 {
   Ref<Result> result;
   try {
@@ -5900,7 +5900,7 @@ void GenericMultipleBarcodeReader::doDecodeMultiple(Ref<BinaryBitmap> image,
     return;
   }
   bool alreadyFound = false;
-  for (unsigned long i = 0; i < results.size(); i++) {
+  for (unsigned int i = 0; i < results.size(); i++) {
     Ref<Result> existingResult = results[i];
     if (existingResult->getText()->getText() == result->getText()->getText()) {
       alreadyFound = true;
@@ -5917,14 +5917,14 @@ void GenericMultipleBarcodeReader::doDecodeMultiple(Ref<BinaryBitmap> image,
     return;
   }
 
-  long width = image->getWidth();
-  long height = image->getHeight();
+  int width = image->getWidth();
+  int height = image->getHeight();
   float minX = width;
   float minY = height;
   float maxX = 0.0f;
   float maxY = 0.0f;
-  for (unsigned long i = 0; i < resultPoints.size(); i++) {
-    Ref<ResultPoint> polong = resultPoints[i];
+  for (unsigned int i = 0; i < resultPoints.size(); i++) {
+    Ref<ResultPoint> point = resultPoints[i];
     float x = point->getX();
     float y = point->getY();
     if (x < minX) {
@@ -5963,14 +5963,14 @@ void GenericMultipleBarcodeReader::doDecodeMultiple(Ref<BinaryBitmap> image,
   }
 }
 
-Ref<Result> GenericMultipleBarcodeReader::translateResultPoints(Ref<Result> result, long xOffset, long yOffset){
+Ref<Result> GenericMultipleBarcodeReader::translateResultPoints(Ref<Result> result, int xOffset, int yOffset){
   const std::vector<Ref<ResultPoint> > oldResultPoints = result->getResultPoints();
   if (oldResultPoints.empty()) {
     return result;
   }
   std::vector<Ref<ResultPoint> > newResultPoints;
-  for (unsigned long i = 0; i < oldResultPoints.size(); i++) {
-    Ref<ResultPoint> oldPolong = oldResultPoints[i];
+  for (unsigned int i = 0; i < oldResultPoints.size(); i++) {
+    Ref<ResultPoint> oldPoint = oldResultPoints[i];
     newResultPoints.push_back(Ref<ResultPoint>(new ResultPoint(oldPoint->getX() + xOffset, oldPoint->getY() + yOffset)));
   }
   return Ref<Result>(new Result(result->getText(), result->getRawBytes(), newResultPoints, result->getBarcodeFormat()));
@@ -6048,7 +6048,7 @@ std::vector<Ref<Result> > QRCodeMultiReader::decodeMultiple(Ref<BinaryBitmap> im
   MultiDetector detector(image->getBlackMatrix());
 
   std::vector<Ref<DetectorResult> > detectorResult =  detector.detectMulti(hints);
-  for (unsigned long i = 0; i < detectorResult.size(); i++) {
+  for (unsigned int i = 0; i < detectorResult.size(); i++) {
     try {
       Ref<DecoderResult> decoderResult = getDecoder().decode(detectorResult[i]->getBits());
       std::vector<Ref<ResultPoint> > points = detectorResult[i]->getPoints();
@@ -6106,7 +6106,7 @@ std::vector<Ref<DetectorResult> > MultiDetector::detectMulti(DecodeHints hints){
   MultiFinderPatternFinder finder = MultiFinderPatternFinder(image, hints.getResultPointCallback());
   std::vector<Ref<FinderPatternInfo> > info = finder.findMulti(hints);
   std::vector<Ref<DetectorResult> > result;
-  for(unsigned long i = 0; i < info.size(); i++){
+  for(unsigned int i = 0; i < info.size(); i++){
     try{
       result.push_back(processFinderPatternInfo(info[i]));
     } catch (ReaderException e){
@@ -6171,8 +6171,8 @@ MultiFinderPatternFinder::~MultiFinderPatternFinder(){}
 std::vector<Ref<FinderPatternInfo> > MultiFinderPatternFinder::findMulti(DecodeHints const& hints){
   bool tryHarder = hints.getTryHarder();
   Ref<BitMatrix> image = image_; // Protected member
-  long maxI = image->getHeight();
-  long maxJ = image->getWidth();
+  int maxI = image->getHeight();
+  int maxJ = image->getWidth();
   // We are looking for black/white/black/white/black modules in
   // 1:1:3:1:1 ratio; this tracks the number of such modules seen so far
 
@@ -6180,21 +6180,21 @@ std::vector<Ref<FinderPatternInfo> > MultiFinderPatternFinder::findMulti(DecodeH
   // image, and then account for the center being 3 modules in size. This gives the smallest
   // number of pixels the center could be, so skip this often. When trying harder, look for all
   // QR versions regardless of how dense they are.
-  long iSkip = (int) (maxI / (MAX_MODULES * 4.0f) * 3);
+  int iSkip = (int) (maxI / (MAX_MODULES * 4.0f) * 3);
   if (iSkip < MIN_SKIP || tryHarder) {
     iSkip = MIN_SKIP;
   }
 
-  long stateCount[5];
-  for (long i = iSkip - 1; i < maxI; i += iSkip) {
+  int stateCount[5];
+  for (int i = iSkip - 1; i < maxI; i += iSkip) {
     // Get a row of black/white values
     stateCount[0] = 0;
     stateCount[1] = 0;
     stateCount[2] = 0;
     stateCount[3] = 0;
     stateCount[4] = 0;
-    long currentState = 0;
-    for (long j = 0; j < maxJ; j++) {
+    int currentState = 0;
+    for (int j = 0; j < maxJ; j++) {
       if (image->get(j, i)) {
         // Black pixel
         if ((currentState & 1) == 1) { // Counting white pixels
@@ -6242,7 +6242,7 @@ std::vector<Ref<FinderPatternInfo> > MultiFinderPatternFinder::findMulti(DecodeH
   } // for i=iSkip-1 ...
   std::vector<std::vector<Ref<FinderPattern> > > patternInfo = selectBestPatterns();
   std::vector<Ref<FinderPatternInfo> > result;
-  for (unsigned long i = 0; i < patternInfo.size(); i++) {
+  for (unsigned int i = 0; i < patternInfo.size(); i++) {
     std::vector<Ref<FinderPattern> > pattern = patternInfo[i];
     FinderPatternFinder::orderBestPatterns(pattern);
     result.push_back(Ref<FinderPatternInfo>(new FinderPatternInfo(pattern)));
@@ -6253,7 +6253,7 @@ std::vector<Ref<FinderPatternInfo> > MultiFinderPatternFinder::findMulti(DecodeH
 std::vector<std::vector<Ref<FinderPattern> > > MultiFinderPatternFinder::selectBestPatterns(){
   std::vector<Ref<FinderPattern> > possibleCenters = possibleCenters_;
 
-  long size = possibleCenters.size();
+  int size = possibleCenters.size();
 
   if (size < 3) {
     // Couldn't find enough finder patterns
@@ -6282,16 +6282,16 @@ std::vector<std::vector<Ref<FinderPattern> > > MultiFinderPatternFinder::selectB
   *  - form a triangle with 90° angle (checked by comparing top right/bottom left distance
   *    with pythagoras)
   *
-  * Note: we allow each polong to be used for more than one code region: this might seem
+  * Note: we allow each point to be used for more than one code region: this might seem
   * counterintuitive at first, but the performance penalty is not that big. At this point,
   * we cannot make a good quality decision whether the three finders actually represent
   * a QR code, or are just by chance layouted so it looks like there might be a QR code there.
   * So, if the layout seems right, lets have the decoder try to decode.
   */
 
-  for (long i1 = 0; i1 < (size - 2); i1++) {
+  for (int i1 = 0; i1 < (size - 2); i1++) {
     Ref<FinderPattern> p1 = possibleCenters[i1];
-    for (long i2 = i1 + 1; i2 < (size - 1); i2++) {
+    for (int i2 = i1 + 1; i2 < (size - 1); i2++) {
       Ref<FinderPattern> p2 = possibleCenters[i2];
       // Compare the expected module sizes; if they are really off, skip
       float vModSize12 = (p1->getEstimatedModuleSize() - p2->getEstimatedModuleSize()) / std::min(p1->getEstimatedModuleSize(), p2->getEstimatedModuleSize());
@@ -6301,7 +6301,7 @@ std::vector<std::vector<Ref<FinderPattern> > > MultiFinderPatternFinder::selectB
         // any more interesting elements for the given p1.
         break;
       }
-      for (long i3 = i2 + 1; i3 < size; i3++) {
+      for (int i3 = i2 + 1; i3 < size; i3++) {
         Ref<FinderPattern> p3 = possibleCenters[i3];
         // Compare the expected module sizes; if they are really off, skip
         float vModSize23 = (p2->getEstimatedModuleSize() - p3->getEstimatedModuleSize()) / std::min(p2->getEstimatedModuleSize(), p3->getEstimatedModuleSize());
@@ -6383,9 +6383,9 @@ std::vector<std::vector<Ref<FinderPattern> > > MultiFinderPatternFinder::selectB
 namespace zxing {
 	namespace oned {
 
-		const long CODE_PATTERNS_LENGTH = 107;
-		const long countersLength = 6;
-		static const long CODE_PATTERNS[CODE_PATTERNS_LENGTH][countersLength] = {
+		const int CODE_PATTERNS_LENGTH = 107;
+		const int countersLength = 6;
+		static const int CODE_PATTERNS[CODE_PATTERNS_LENGTH][countersLength] = {
 			{2, 1, 2, 2, 2, 2}, /* 0 */
 			{2, 2, 2, 1, 2, 2},
 			{2, 2, 2, 2, 2, 1},
@@ -6500,8 +6500,8 @@ namespace zxing {
 		}
 
 		int* Code128Reader::findStartPattern(Ref<BitArray> row){
-			long width = row->getSize();
-			long rowOffset = 0;
+			int width = row->getSize();
+			int rowOffset = 0;
 			while (rowOffset < width) {
 				if (row->get(rowOffset)) {
 					break;
@@ -6509,22 +6509,22 @@ namespace zxing {
 				rowOffset++;
 			}
 
-			long counterPosition = 0;
-			long counters[countersLength] = {0,0,0,0,0,0};
-			long patternStart = rowOffset;
+			int counterPosition = 0;
+			int counters[countersLength] = {0,0,0,0,0,0};
+			int patternStart = rowOffset;
 			bool isWhite = false;
-			long patternLength =  sizeof(counters) / sizeof(int);
+			int patternLength =  sizeof(counters) / sizeof(int);
 
-			for (long i = rowOffset; i < width; i++) {
+			for (int i = rowOffset; i < width; i++) {
 				bool pixel = row->get(i);
 				if (pixel ^ isWhite) {
 					counters[counterPosition]++;
 				} else {
 					if (counterPosition == patternLength - 1) {
-						unsigned long bestVariance = MAX_AVG_VARIANCE;
-						long bestMatch = -1;
-						for (long startCode = CODE_START_A; startCode <= CODE_START_C; startCode++) {
-							unsigned long variance = patternMatchVariance(counters, sizeof(counters) / sizeof(int),
+						unsigned int bestVariance = MAX_AVG_VARIANCE;
+						int bestMatch = -1;
+						for (int startCode = CODE_START_A; startCode <= CODE_START_C; startCode++) {
+							unsigned int variance = patternMatchVariance(counters, sizeof(counters) / sizeof(int),
 							    CODE_PATTERNS[startCode], MAX_INDIVIDUAL_VARIANCE);
 							if (variance < bestVariance) {
 								bestVariance = variance;
@@ -6543,7 +6543,7 @@ namespace zxing {
 							}
 						}
 						patternStart += counters[0] + counters[1];
-						for (long y = 2; y < patternLength; y++) {
+						for (int y = 2; y < patternLength; y++) {
 							counters[y - 2] = counters[y];
 						}
 						counters[patternLength - 2] = 0;
@@ -6559,21 +6559,21 @@ namespace zxing {
 			throw ReaderException("");
 		}
 
-		long Code128Reader::decodeCode(Ref<BitArray> row, long counters[], long countersCount,
-		    long rowOffset) {
+		int Code128Reader::decodeCode(Ref<BitArray> row, int counters[], int countersCount,
+		    int rowOffset) {
 		  if (!recordPattern(row, rowOffset, counters, countersCount)) {
 		    throw ReaderException("");
 		  }
-			unsigned long bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
-			long bestMatch = -1;
-			for (long d = 0; d < CODE_PATTERNS_LENGTH; d++) {
-				long pattern[countersLength];
+			unsigned int bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
+			int bestMatch = -1;
+			for (int d = 0; d < CODE_PATTERNS_LENGTH; d++) {
+				int pattern[countersLength];
 
-				for(long ind = 0; ind< countersLength; ind++){
+				for(int ind = 0; ind< countersLength; ind++){
 					pattern[ind] = CODE_PATTERNS[d][ind];
 				}
 //				memcpy(pattern, CODE_PATTERNS[d], countersLength);
-				unsigned long variance = patternMatchVariance(counters, countersCount, pattern,
+				unsigned int variance = patternMatchVariance(counters, countersCount, pattern,
 				    MAX_INDIVIDUAL_VARIANCE);
 				if (variance < bestVariance) {
 					bestVariance = variance;
@@ -6588,12 +6588,12 @@ namespace zxing {
 			}
 		}
 
-		Ref<Result> Code128Reader::decodeRow(long rowNumber, Ref<BitArray> row) {
+		Ref<Result> Code128Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
 		  int* startPatternInfo = NULL;
 		  try {
         startPatternInfo = findStartPattern(row);
-        long startCode = startPatternInfo[2];
-        long codeSet;
+        int startCode = startPatternInfo[2];
+        int codeSet;
         switch (startCode) {
           case CODE_START_A:
             codeSet = CODE_CODE_A;
@@ -6614,14 +6614,14 @@ namespace zxing {
         std::string tmpResultString;
         std::stringstream tmpResultSStr; // used if its Code 128C
 
-        long lastStart = startPatternInfo[0];
-        long nextStart = startPatternInfo[1];
-        long counters[countersLength] = {0,0,0,0,0,0};
+        int lastStart = startPatternInfo[0];
+        int nextStart = startPatternInfo[1];
+        int counters[countersLength] = {0,0,0,0,0,0};
 
-        long lastCode = 0;
-        long code = 0;
-        long checksumTotal = startCode;
-        long multiplier = 0;
+        int lastCode = 0;
+        int code = 0;
+        int checksumTotal = startCode;
+        int multiplier = 0;
         bool lastCharacterWasPrintable = true;
 
         while (!done) {
@@ -6651,8 +6651,8 @@ namespace zxing {
 
           // Advance to where the next code will to start
           lastStart = nextStart;
-          long _countersLength = sizeof(counters) / sizeof(int);
-          for (long i = 0; i < _countersLength; i++) {
+          int _countersLength = sizeof(counters) / sizeof(int);
+          for (int i = 0; i < _countersLength; i++) {
             nextStart += counters[i];
           }
 
@@ -6781,7 +6781,7 @@ namespace zxing {
         // Check for ample whitespace following pattern, but, to do this we first need to remember that
         // we fudged decoding CODE_STOP since it actually has 7 bars, not 6. There is a black bar left
         // to read off. Would be slightly better to properly read. Here we just skip it:
-        long width = row->getSize();
+        int width = row->getSize();
         while (nextStart < width && row->get(nextStart)) {
           nextStart++;
         }
@@ -6799,7 +6799,7 @@ namespace zxing {
         }
 
         // Need to pull out the check digits from string
-        long resultLength = tmpResultString.length();
+        int resultLength = tmpResultString.length();
         // Only bother if the result had at least one character, and if the checksum digit happened to
         // be a printable character. If it was just interpreted as a control code, nothing to remove.
         if (resultLength > 0 && lastCharacterWasPrintable) {
@@ -6836,7 +6836,7 @@ namespace zxing {
 		}
 
 		void Code128Reader::append(char* s, char c){
-			long len = strlen(s);
+			int len = strlen(s);
 			s[len] = c;
 			s[len + 1] = '\0';
 		}
@@ -6881,11 +6881,11 @@ namespace oned {
   /**
    * These represent the encodings of characters, as patterns of wide and narrow
    * bars.
-   * The 9 least-significant bits of each long correspond to the pattern of wide
+   * The 9 least-significant bits of each int correspond to the pattern of wide
    * and narrow, with 1s representing "wide" and 0s representing narrow.
    */
-  const long CHARACTER_ENCODINGS_LEN = 44;
-  static long CHARACTER_ENCODINGS[CHARACTER_ENCODINGS_LEN] = {
+  const int CHARACTER_ENCODINGS_LEN = 44;
+  static int CHARACTER_ENCODINGS[CHARACTER_ENCODINGS_LEN] = {
     0x034, 0x121, 0x061, 0x160, 0x031, 0x130, 0x070, 0x025, 0x124, 0x064, // 0-9
     0x109, 0x049, 0x148, 0x019, 0x118, 0x058, 0x00D, 0x10C, 0x04C, 0x01C, // A-J
     0x103, 0x043, 0x142, 0x013, 0x112, 0x052, 0x007, 0x106, 0x046, 0x016, // K-T
@@ -6893,7 +6893,7 @@ namespace oned {
     0x0A8, 0x0A2, 0x08A, 0x02A // $-%
   };
 
-  static long ASTERISK_ENCODING = 0x094;
+  static int ASTERISK_ENCODING = 0x094;
   static const char* ALPHABET_STRING =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. *$/+%";
 
@@ -6928,12 +6928,12 @@ namespace oned {
     extendedMode(extendedMode_) {
   }
 
-  Ref<Result> Code39Reader::decodeRow(long rowNumber, Ref<BitArray> row) {
+  Ref<Result> Code39Reader::decodeRow(int rowNumber, Ref<BitArray> row) {
     int* start = NULL;
     try {
       start = findAsteriskPattern(row);
-      long nextStart = start[1];
-      long end = row->getSize();
+      int nextStart = start[1];
+      int end = row->getSize();
 
       // Read off white space
       while (nextStart < end && !row->get(nextStart)) {
@@ -6942,25 +6942,25 @@ namespace oned {
 
       std::string tmpResultString;
 
-      const long countersLen = 9;
-      long counters[countersLen];
-      for (long i = 0; i < countersLen; i++) {
+      const int countersLen = 9;
+      int counters[countersLen];
+      for (int i = 0; i < countersLen; i++) {
         counters[i] = 0;
       }
       char decodedChar;
-      long lastStart;
+      int lastStart;
       do {
         if (!recordPattern(row, nextStart, counters, countersLen)) {
           throw ReaderException("");
         }
-        long pattern = toNarrowWidePattern(counters, countersLen);
+        int pattern = toNarrowWidePattern(counters, countersLen);
         if (pattern < 0) {
           throw ReaderException("pattern < 0");
         }
         decodedChar = patternToChar(pattern);
         tmpResultString.append(1, decodedChar);
         lastStart = nextStart;
-        for (long i = 0; i < countersLen; i++) {
+        for (int i = 0; i < countersLen; i++) {
           nextStart += counters[i];
         }
         // Read off white space
@@ -6971,11 +6971,11 @@ namespace oned {
       tmpResultString.erase(tmpResultString.length()-1, 1);// remove asterisk
 
       // Look for whitespace after pattern:
-      long lastPatternSize = 0;
-      for (long i = 0; i < countersLen; i++) {
+      int lastPatternSize = 0;
+      for (int i = 0; i < countersLen; i++) {
         lastPatternSize += counters[i];
       }
-      long whiteSpaceAfterEnd = nextStart - lastStart - lastPatternSize;
+      int whiteSpaceAfterEnd = nextStart - lastStart - lastPatternSize;
       // If 50% of last pattern size, following last pattern, is not whitespace,
       // fail (but if it's whitespace to the very end of the image, that's OK)
       if (nextStart != end && whiteSpaceAfterEnd / 2 < lastPatternSize) {
@@ -6983,9 +6983,9 @@ namespace oned {
       }
 
       if (usingCheckDigit) {
-        long max = tmpResultString.length() - 1;
-        unsigned long total = 0;
-        for (long i = 0; i < max; i++) {
+        int max = tmpResultString.length() - 1;
+        unsigned int total = 0;
+        for (int i = 0; i < max; i++) {
           total += alphabet_string.find_first_of(tmpResultString[i], 0);
         }
         if (total % 43 != alphabet_string.find_first_of(tmpResultString[max], 0)) {
@@ -7029,8 +7029,8 @@ namespace oned {
   }
 
   int* Code39Reader::findAsteriskPattern(Ref<BitArray> row){
-    long width = row->getSize();
-    long rowOffset = 0;
+    int width = row->getSize();
+    int rowOffset = 0;
     while (rowOffset < width) {
       if (row->get(rowOffset)) {
         break;
@@ -7038,17 +7038,17 @@ namespace oned {
       rowOffset++;
     }
 
-    long counterPosition = 0;
-    const long countersLen = 9;
-    long counters[countersLen];
-    for (long i = 0; i < countersLen; i++) {
+    int counterPosition = 0;
+    const int countersLen = 9;
+    int counters[countersLen];
+    for (int i = 0; i < countersLen; i++) {
       counters[i] = 0;
     }
-    long patternStart = rowOffset;
+    int patternStart = rowOffset;
     bool isWhite = false;
-    long patternLength = countersLen;
+    int patternLength = countersLen;
 
-    for (long i = rowOffset; i < width; i++) {
+    for (int i = rowOffset; i < width; i++) {
       bool pixel = row->get(i);
       if (pixel ^ isWhite) {
         counters[counterPosition]++;
@@ -7065,7 +7065,7 @@ namespace oned {
             }
           }
           patternStart += counters[0] + counters[1];
-          for (long y = 2; y < patternLength; y++) {
+          for (int y = 2; y < patternLength; y++) {
             counters[y - 2] = counters[y];
           }
           counters[patternLength - 2] = 0;
@@ -7083,24 +7083,24 @@ namespace oned {
 
   // For efficiency, returns -1 on failure. Not throwing here saved as many as
   // 700 exceptions per image when using some of our blackbox images.
-  long Code39Reader::toNarrowWidePattern(long counters[], long countersLen){
-    long numCounters = countersLen;
-    long maxNarrowCounter = 0;
-    long wideCounters;
+  int Code39Reader::toNarrowWidePattern(int counters[], int countersLen){
+    int numCounters = countersLen;
+    int maxNarrowCounter = 0;
+    int wideCounters;
     do {
-      long minCounter = INT_MAX;
-      for (long i = 0; i < numCounters; i++) {
-        long counter = counters[i];
+      int minCounter = INT_MAX;
+      for (int i = 0; i < numCounters; i++) {
+        int counter = counters[i];
         if (counter < minCounter && counter > maxNarrowCounter) {
           minCounter = counter;
         }
       }
       maxNarrowCounter = minCounter;
       wideCounters = 0;
-      long totalWideCountersWidth = 0;
-      long pattern = 0;
-      for (long i = 0; i < numCounters; i++) {
-        long counter = counters[i];
+      int totalWideCountersWidth = 0;
+      int pattern = 0;
+      for (int i = 0; i < numCounters; i++) {
+        int counter = counters[i];
         if (counters[i] > maxNarrowCounter) {
           pattern |= 1 << (numCounters - 1 - i);
           wideCounters++;
@@ -7111,8 +7111,8 @@ namespace oned {
         // Found 3 wide counters, but are they close enough in width?
         // We can perform a cheap, conservative check to see if any individual
         // counter is more than 1.5 times the average:
-        for (long i = 0; i < numCounters && wideCounters > 0; i++) {
-          long counter = counters[i];
+        for (int i = 0; i < numCounters && wideCounters > 0; i++) {
+          int counter = counters[i];
           if (counters[i] > maxNarrowCounter) {
             wideCounters--;
             // totalWideCountersWidth = 3 * average, so this checks if
@@ -7128,8 +7128,8 @@ namespace oned {
     return -1;
   }
 
-  char Code39Reader::patternToChar(long pattern){
-    for (long i = 0; i < CHARACTER_ENCODINGS_LEN; i++) {
+  char Code39Reader::patternToChar(int pattern){
+    for (int i = 0; i < CHARACTER_ENCODINGS_LEN; i++) {
       if (CHARACTER_ENCODINGS[i] == pattern) {
         return ALPHABET[i];
       }
@@ -7138,9 +7138,9 @@ namespace oned {
   }
 
   Ref<String> Code39Reader::decodeExtended(std::string encoded){
-    long length = encoded.length();
+    int length = encoded.length();
     std::string tmpDecoded;
-    for (long i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
       char c = encoded[i];
       if (c == '+' || c == '$' || c == '%' || c == '/') {
         char next = encoded[i + 1];
@@ -7222,30 +7222,30 @@ namespace oned {
 namespace zxing {
   namespace oned {
 
-    static const long FIRST_DIGIT_ENCODINGS[10] = {
+    static const int FIRST_DIGIT_ENCODINGS[10] = {
       0x00, 0x0B, 0x0D, 0xE, 0x13, 0x19, 0x1C, 0x15, 0x16, 0x1A
     };
 
     EAN13Reader::EAN13Reader() { }
 
-    long EAN13Reader::decodeMiddle(Ref<BitArray> row, long startGuardBegin, long startGuardEnd,
+    int EAN13Reader::decodeMiddle(Ref<BitArray> row, int startGuardBegin, int startGuardEnd,
         std::string& resultString) {
       (void)startGuardBegin;
-      const long countersLen = 4;
-      long counters[countersLen] = { 0, 0, 0, 0 };
+      const int countersLen = 4;
+      int counters[countersLen] = { 0, 0, 0, 0 };
 
-      long end = row->getSize();
-      long rowOffset = startGuardEnd;
-      long lgPatternFound = 0;
+      int end = row->getSize();
+      int rowOffset = startGuardEnd;
+      int lgPatternFound = 0;
 
-      for (long x = 0; x < 6 && rowOffset < end; x++) {
-        long bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
+      for (int x = 0; x < 6 && rowOffset < end; x++) {
+        int bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
             UPC_EAN_PATTERNS_L_AND_G_PATTERNS);
         if (bestMatch < 0) {
           return -1;
         }
         resultString.append(1, (char) ('0' + bestMatch % 10));
-        for (long i = 0; i < countersLen; i++) {
+        for (int i = 0; i < countersLen; i++) {
           rowOffset += counters[i];
         }
         if (bestMatch >= 10) {
@@ -7257,19 +7257,19 @@ namespace zxing {
         return -1;
       }
 
-      long middleRangeStart;
-      long middleRangeEnd;
+      int middleRangeStart;
+      int middleRangeEnd;
       if (findGuardPattern(row, rowOffset, true, (int*)getMIDDLE_PATTERN(),
             getMIDDLE_PATTERN_LEN(), &middleRangeStart, &middleRangeEnd)) {
         rowOffset = middleRangeEnd;
-        for (long x = 0; x < 6 && rowOffset < end; x++) {
-          long bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
+        for (int x = 0; x < 6 && rowOffset < end; x++) {
+          int bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
               UPC_EAN_PATTERNS_L_PATTERNS);
           if (bestMatch < 0) {
             return -1;
           }
           resultString.append(1, (char) ('0' + bestMatch));
-          for (long i = 0; i < countersLen; i++) {
+          for (int i = 0; i < countersLen; i++) {
             rowOffset += counters[i];
           }
         }
@@ -7278,8 +7278,8 @@ namespace zxing {
       return -1;
     }
 
-    bool EAN13Reader::determineFirstDigit(std::string& resultString, long lgPatternFound) {
-      for (long d = 0; d < 10; d++) {
+    bool EAN13Reader::determineFirstDigit(std::string& resultString, int lgPatternFound) {
+      for (int d = 0; d < 10; d++) {
         if (lgPatternFound == FIRST_DIGIT_ENCODINGS[d]) {
           resultString.insert(0, 1, (char) ('0' + d));
           return true;
@@ -7321,40 +7321,40 @@ namespace zxing {
 
     EAN8Reader::EAN8Reader(){ }
 
-    long EAN8Reader::decodeMiddle(Ref<BitArray> row, long startGuardBegin, long startGuardEnd,
+    int EAN8Reader::decodeMiddle(Ref<BitArray> row, int startGuardBegin, int startGuardEnd,
         std::string& resultString){
       (void)startGuardBegin;
-      const long countersLen = 4;
-      long counters[countersLen] = { 0, 0, 0, 0 };
+      const int countersLen = 4;
+      int counters[countersLen] = { 0, 0, 0, 0 };
 
-      long end = row->getSize();
-      long rowOffset = startGuardEnd;
+      int end = row->getSize();
+      int rowOffset = startGuardEnd;
 
-      for (long x = 0; x < 4 && rowOffset < end; x++) {
-        long bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
+      for (int x = 0; x < 4 && rowOffset < end; x++) {
+        int bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
             UPC_EAN_PATTERNS_L_PATTERNS);
         if (bestMatch < 0) {
           return -1;
         }
         resultString.append(1, (char) ('0' + bestMatch));
-        for (long i = 0; i < countersLen; i++) {
+        for (int i = 0; i < countersLen; i++) {
           rowOffset += counters[i];
         }
       }
 
-      long middleRangeStart;
-      long middleRangeEnd;
+      int middleRangeStart;
+      int middleRangeEnd;
       if (findGuardPattern(row, rowOffset, true, (int*)getMIDDLE_PATTERN(),
             getMIDDLE_PATTERN_LEN(), &middleRangeStart, &middleRangeEnd)) {
         rowOffset = middleRangeEnd;
-        for (long x = 0; x < 4 && rowOffset < end; x++) {
-          long bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
+        for (int x = 0; x < 4 && rowOffset < end; x++) {
+          int bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
               UPC_EAN_PATTERNS_L_PATTERNS);
           if (bestMatch < 0) {
             return -1;
           }
           resultString.append(1, (char) ('0' + bestMatch));
-          for (long i = 0; i < countersLen; i++) {
+          for (int i = 0; i < countersLen; i++) {
             rowOffset += counters[i];
           }
         }
@@ -7397,11 +7397,11 @@ namespace zxing {
 namespace zxing {
   namespace oned {
 
-    static const long W = 3; // Pixel width of a wide line
-    static const long N = 1; // Pixed width of a narrow line
+    static const int W = 3; // Pixel width of a wide line
+    static const int N = 1; // Pixed width of a narrow line
 
-    const long DEFAULT_ALLOWED_LENGTHS_LEN = 10;
-    const long DEFAULT_ALLOWED_LENGTHS[DEFAULT_ALLOWED_LENGTHS_LEN] = { 44, 24, 20, 18, 16, 14, 12, 10, 8, 6 };
+    const int DEFAULT_ALLOWED_LENGTHS_LEN = 10;
+    const int DEFAULT_ALLOWED_LENGTHS[DEFAULT_ALLOWED_LENGTHS_LEN] = { 44, 24, 20, 18, 16, 14, 12, 10, 8, 6 };
 
     /**
      * Start/end guard pattern.
@@ -7409,17 +7409,17 @@ namespace zxing {
      * Note: The end pattern is reversed because the row is reversed before
      * searching for the END_PATTERN
      */
-    static const long START_PATTERN_LEN = 4;
-    static const long START_PATTERN[START_PATTERN_LEN] = {N, N, N, N};
+    static const int START_PATTERN_LEN = 4;
+    static const int START_PATTERN[START_PATTERN_LEN] = {N, N, N, N};
 
-    static const long END_PATTERN_REVERSED_LEN = 3;
-    static const long END_PATTERN_REVERSED[END_PATTERN_REVERSED_LEN] = {N, N, W};
+    static const int END_PATTERN_REVERSED_LEN = 3;
+    static const int END_PATTERN_REVERSED[END_PATTERN_REVERSED_LEN] = {N, N, W};
 
     /**
      * Patterns of Wide / Narrow lines to indicate each digit
      */
-    static const long PATTERNS_LEN = 10;
-    static const long PATTERNS[PATTERNS_LEN][5] = {
+    static const int PATTERNS_LEN = 10;
+    static const int PATTERNS[PATTERNS_LEN][5] = {
       {N, N, W, W, N}, // 0
       {W, N, N, N, W}, // 1
       {N, W, N, N, W}, // 2
@@ -7437,7 +7437,7 @@ namespace zxing {
     }
 
 
-    Ref<Result> ITFReader::decodeRow(long rowNumber, Ref<BitArray> row) {
+    Ref<Result> ITFReader::decodeRow(int rowNumber, Ref<BitArray> row) {
       int* startRange = 0;
       int* endRange = 0;
       try {
@@ -7450,9 +7450,9 @@ namespace zxing {
 
         // To avoid false positives with 2D barcodes (and other patterns), make
         // an assumption that the decoded string must be a known length
-        long length = tmpResult.length();
+        int length = tmpResult.length();
         bool lengthOK = false;
-        for (long i = 0; i < DEFAULT_ALLOWED_LENGTHS_LEN; i++) {
+        for (int i = 0; i < DEFAULT_ALLOWED_LENGTHS_LEN; i++) {
           if (length == DEFAULT_ALLOWED_LENGTHS[i]) {
             lengthOK = true;
             break;
@@ -7487,22 +7487,22 @@ namespace zxing {
      * @param resultString {@link StringBuffer} to append decoded chars to
      * @throws ReaderException if decoding could not complete successfully
      */
-    void ITFReader::decodeMiddle(Ref<BitArray> row, long payloadStart, long payloadEnd,
+    void ITFReader::decodeMiddle(Ref<BitArray> row, int payloadStart, int payloadEnd,
         std::string& resultString) {
       // Digits are interleaved in pairs - 5 black lines for one digit, and the
       // 5
       // interleaved white lines for the second digit.
       // Therefore, need to scan 10 lines and then
       // split these into two arrays
-      long counterDigitPairLen = 10;
-      long counterDigitPair[counterDigitPairLen];
-      for (long i=0; i<counterDigitPairLen; i++) {
+      int counterDigitPairLen = 10;
+      int counterDigitPair[counterDigitPairLen];
+      for (int i=0; i<counterDigitPairLen; i++) {
         counterDigitPair[i] = 0;
       }
 
-      long counterBlack[5];
-      long counterWhite[5];
-      for (long i=0; i<5; i++) {
+      int counterBlack[5];
+      int counterWhite[5];
+      for (int i=0; i<5; i++) {
         counterBlack[i] = 0;
         counterWhite[i] = 0;
       }
@@ -7513,18 +7513,18 @@ namespace zxing {
           throw ReaderException("");
         }
         // Split them into each array
-        for (long k = 0; k < 5; k++) {
-          long twoK = k << 1;
+        for (int k = 0; k < 5; k++) {
+          int twoK = k << 1;
           counterBlack[k] = counterDigitPair[twoK];
           counterWhite[k] = counterDigitPair[twoK + 1];
         }
 
-        long bestMatch = decodeDigit(counterBlack, 5);
+        int bestMatch = decodeDigit(counterBlack, 5);
         resultString.append(1, (char) ('0' + bestMatch));
         bestMatch = decodeDigit(counterWhite, 5);
         resultString.append(1, (char) ('0' + bestMatch));
 
-        for (long i = 0; i < counterDigitPairLen; i++) {
+        for (int i = 0; i < counterDigitPairLen; i++) {
           payloadStart += counterDigitPair[i];
         }
       }
@@ -7539,7 +7539,7 @@ namespace zxing {
      * @throws ReaderException
      */
     int* ITFReader::decodeStart(Ref<BitArray> row) {
-      long endStart = skipWhiteSpace(row);
+      int endStart = skipWhiteSpace(row);
       int* startPattern = 0;
       try {
           startPattern = findGuardPattern(row, endStart, START_PATTERN, START_PATTERN_LEN);
@@ -7571,7 +7571,7 @@ namespace zxing {
       row->reverse();
                         int* endPattern = 0;
       try {
-        long endStart = skipWhiteSpace(row);
+        int endStart = skipWhiteSpace(row);
         endPattern = findGuardPattern(row, endStart, END_PATTERN_REVERSED, END_PATTERN_REVERSED_LEN);
 
         // The start & end patterns must be pre/post fixed by a quiet zone. This
@@ -7582,7 +7582,7 @@ namespace zxing {
         // Now recalculate the indices of where the 'endblock' starts & stops to
         // accommodate
         // the reversed nature of the search
-        long temp = endPattern[0];
+        int temp = endPattern[0];
         endPattern[0] = row->getSize() - endPattern[1];
         endPattern[1] = row->getSize() - temp;
 
@@ -7610,13 +7610,13 @@ namespace zxing {
      * @param startPattern index into row of the start or end pattern.
      * @throws ReaderException if the quiet zone cannot be found, a ReaderException is thrown.
      */
-    void ITFReader::validateQuietZone(Ref<BitArray> row, long startPattern) {
+    void ITFReader::validateQuietZone(Ref<BitArray> row, int startPattern) {
       (void)row;
       (void)startPattern;
 //#pragma mark needs some corrections
-//      long quietCount = narrowLineWidth * 10;  // expect to find this many pixels of quiet zone
+//      int quietCount = narrowLineWidth * 10;  // expect to find this many pixels of quiet zone
 //
-//      for (long i = startPattern - 1; quietCount > 0 && i >= 0; i--) {
+//      for (int i = startPattern - 1; quietCount > 0 && i >= 0; i--) {
 //        if (row->get(i)) {
 //          break;
 //        }
@@ -7635,9 +7635,9 @@ namespace zxing {
      * @return index of the first black line.
      * @throws ReaderException Throws exception if no black lines are found in the row
      */
-    long ITFReader::skipWhiteSpace(Ref<BitArray> row) {
-      long width = row->getSize();
-      long endStart = 0;
+    int ITFReader::skipWhiteSpace(Ref<BitArray> row) {
+      int width = row->getSize();
+      int endStart = 0;
       while (endStart < width) {
         if (row->get(endStart)) {
           break;
@@ -7659,21 +7659,21 @@ namespace zxing {
      *         ints
      * @throws ReaderException if pattern is not found
      */
-    int* ITFReader::findGuardPattern(Ref<BitArray> row, long rowOffset, const long pattern[],
-        long patternLen) {
+    int* ITFReader::findGuardPattern(Ref<BitArray> row, int rowOffset, const int pattern[],
+        int patternLen) {
       // TODO: This is very similar to implementation in UPCEANReader. Consider if they can be
       // merged to a single method.
-      long patternLength = patternLen;
-      long counters[patternLength];
-      for (long i=0; i<patternLength; i++) {
+      int patternLength = patternLen;
+      int counters[patternLength];
+      for (int i=0; i<patternLength; i++) {
         counters[i] = 0;
       }
-      long width = row->getSize();
+      int width = row->getSize();
       bool isWhite = false;
 
-      long counterPosition = 0;
-      long patternStart = rowOffset;
-      for (long x = rowOffset; x < width; x++) {
+      int counterPosition = 0;
+      int patternStart = rowOffset;
+      for (int x = rowOffset; x < width; x++) {
         bool pixel = row->get(x);
         if (pixel ^ isWhite) {
           counters[counterPosition]++;
@@ -7687,7 +7687,7 @@ namespace zxing {
               return resultValue;
             }
             patternStart += counters[0] + counters[1];
-            for (long y = 2; y < patternLength; y++) {
+            for (int y = 2; y < patternLength; y++) {
               counters[y - 2] = counters[y];
             }
             counters[patternLength - 2] = 0;
@@ -7711,16 +7711,16 @@ namespace zxing {
      * @return The decoded digit
      * @throws ReaderException if digit cannot be decoded
      */
-    long ITFReader::decodeDigit(long counters[], long countersLen){
-      unsigned long bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
-      long bestMatch = -1;
-      long max = PATTERNS_LEN;
-      for (long i = 0; i < max; i++) {
-        long pattern[countersLen];
-        for(long ind = 0; ind<countersLen; ind++){
+    int ITFReader::decodeDigit(int counters[], int countersLen){
+      unsigned int bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
+      int bestMatch = -1;
+      int max = PATTERNS_LEN;
+      for (int i = 0; i < max; i++) {
+        int pattern[countersLen];
+        for(int ind = 0; ind<countersLen; ind++){
           pattern[ind] = PATTERNS[i][ind];
         }
-        unsigned long variance = patternMatchVariance(counters, countersLen, pattern,
+        unsigned int variance = patternMatchVariance(counters, countersLen, pattern,
             MAX_INDIVIDUAL_VARIANCE);
         if (variance < bestVariance) {
           bestVariance = variance;
@@ -7730,7 +7730,7 @@ namespace zxing {
       if (bestMatch >= 0) {
         return bestMatch;
       } else {
-        throw ReaderException("digit didlong found");
+        throw ReaderException("digit didint found");
       }
     }
 
@@ -7777,9 +7777,9 @@ namespace zxing {
 
     }
 
-    Ref<Result> MultiFormatOneDReader::decodeRow(long rowNumber, Ref<BitArray> row) {
-      long size = readers.size();
-      for (long i = 0; i < size; i++) {
+    Ref<Result> MultiFormatOneDReader::decodeRow(int rowNumber, Ref<BitArray> row) {
+      int size = readers.size();
+      for (int i = 0; i < size; i++) {
         OneDReader* reader = readers[i];
         Ref<Result> result = reader->decodeRow(rowNumber, row);
         if (!result.empty()) {
@@ -7837,10 +7837,10 @@ namespace zxing {
 
     }
 
-    Ref<Result> MultiFormatUPCEANReader::decodeRow(long rowNumber, Ref<BitArray> row) {
+    Ref<Result> MultiFormatUPCEANReader::decodeRow(int rowNumber, Ref<BitArray> row) {
       // Compute this location once and reuse it on multiple implementations
-      long size = readers.size();
-      for (long i = 0; i < size; i++) {
+      int size = readers.size();
+      for (int i = 0; i < size; i++) {
         Ref<OneDReader> reader = readers[i];
         Ref<Result> result = reader->decodeRow(rowNumber, row);
         if (result.empty()) {
@@ -7917,7 +7917,7 @@ namespace zxing {
           /*
           // Record that we found it rotated 90 degrees CCW / 270 degrees CW
           Hashtable metadata = result.getResultMetadata();
-          long orientation = 270;
+          int orientation = 270;
           if (metadata != null && metadata.containsKey(ResultMetadataType.ORIENTATION)) {
             // But if we found it reversed in doDecode(), add in that result here:
             orientation = (orientation +
@@ -7927,7 +7927,7 @@ namespace zxing {
           */
           // Update result points
           std::vector<Ref<ResultPoint> >& points (result->getResultPoints());
-          long height = rotatedImage->getHeight();
+          int height = rotatedImage->getHeight();
           for (size_t i = 0; i < points.size(); i++) {
             points[i].reset(new OneDResultPoint(height - points[i]->getY() - 1, points[i]->getX()));
           }
@@ -7940,30 +7940,30 @@ namespace zxing {
     }
 
     Ref<Result> OneDReader::doDecode(Ref<BinaryBitmap> image, DecodeHints hints) {
-      long width = image->getWidth();
-      long height = image->getHeight();
+      int width = image->getWidth();
+      int height = image->getHeight();
       Ref<BitArray> row(new BitArray(width));
-      long middle = height >> 1;
+      int middle = height >> 1;
       bool tryHarder = hints.getTryHarder();
-      long rowStep = (int)fmax(1, height >> (tryHarder ? 8 : 5));
-      long maxLines;
+      int rowStep = (int)fmax(1, height >> (tryHarder ? 8 : 5));
+      int maxLines;
       if (tryHarder) {
         maxLines = height; // Look at the whole image, not just the center
       } else {
         maxLines = 15; // 15 rows spaced 1/32 apart is roughly the middle half of the image
       }
 
-      for (long x = 0; x < maxLines; x++) {
+      for (int x = 0; x < maxLines; x++) {
         // Scanning from the middle out. Determine which row we're looking at next:
-        long rowStepsAboveOrBelow = (x + 1) >> 1;
+        int rowStepsAboveOrBelow = (x + 1) >> 1;
         bool isAbove = (x & 0x01) == 0; // i.e. is x even?
-        long rowNumber = middle + rowStep * (isAbove ? rowStepsAboveOrBelow : -rowStepsAboveOrBelow);
+        int rowNumber = middle + rowStep * (isAbove ? rowStepsAboveOrBelow : -rowStepsAboveOrBelow);
         if (rowNumber < 0 || rowNumber >= height) {
           // Oops, if we run off the top or bottom, stop
           break;
         }
 
-        // Estimate black polong for this row and load it:
+        // Estimate black point for this row and load it:
         try {
           row = image->getBlackRow(rowNumber, row);
         } catch (ReaderException const& re) {
@@ -7974,7 +7974,7 @@ namespace zxing {
 
         // While we have the image data in a BitArray, it's fairly cheap to reverse it in place to
         // handle decoding upside down barcodes.
-        for (long attempt = 0; attempt < 2; attempt++) {
+        for (int attempt = 0; attempt < 2; attempt++) {
           if (attempt == 1) {
             row->reverse(); // reverse the row and continue
           }
@@ -8010,12 +8010,12 @@ namespace zxing {
       return Ref<Result>();
     }
 
-    unsigned long OneDReader::patternMatchVariance(long counters[], long countersSize,
-        const long pattern[], long maxIndividualVariance) {
-      long numCounters = countersSize;
-      unsigned long total = 0;
-      unsigned long patternLength = 0;
-      for (long i = 0; i < numCounters; i++) {
+    unsigned int OneDReader::patternMatchVariance(int counters[], int countersSize,
+        const int pattern[], int maxIndividualVariance) {
+      int numCounters = countersSize;
+      unsigned int total = 0;
+      unsigned int patternLength = 0;
+      for (int i = 0; i < numCounters; i++) {
         total += counters[i];
         patternLength += pattern[i];
       }
@@ -8024,17 +8024,17 @@ namespace zxing {
         // to reliably match, so fail:
         return INT_MAX;
       }
-      // We're going to fake floating-polong math in integers. We just need to use more bits.
+      // We're going to fake floating-point math in integers. We just need to use more bits.
       // Scale up patternLength so that intermediate values below like scaledCounter will have
       // more "significant digits"
-      unsigned long unitBarWidth = (total << INTEGER_MATH_SHIFT) / patternLength;
+      unsigned int unitBarWidth = (total << INTEGER_MATH_SHIFT) / patternLength;
       maxIndividualVariance = (maxIndividualVariance * unitBarWidth) >> INTEGER_MATH_SHIFT;
 
-      unsigned long totalVariance = 0;
-      for (long x = 0; x < numCounters; x++) {
-        long counter = counters[x] << INTEGER_MATH_SHIFT;
-        long scaledPattern = pattern[x] * unitBarWidth;
-        long variance = counter > scaledPattern ? counter - scaledPattern : scaledPattern - counter;
+      unsigned int totalVariance = 0;
+      for (int x = 0; x < numCounters; x++) {
+        int counter = counters[x] << INTEGER_MATH_SHIFT;
+        int scaledPattern = pattern[x] * unitBarWidth;
+        int variance = counter > scaledPattern ? counter - scaledPattern : scaledPattern - counter;
         if (variance > maxIndividualVariance) {
           return INT_MAX;
         }
@@ -8043,18 +8043,18 @@ namespace zxing {
       return totalVariance / total;
     }
 
-    bool OneDReader::recordPattern(Ref<BitArray> row, long start, long counters[], long countersCount) {
-      long numCounters = countersCount;//sizeof(counters) / sizeof(int);
-      for (long i = 0; i < numCounters; i++) {
+    bool OneDReader::recordPattern(Ref<BitArray> row, int start, int counters[], int countersCount) {
+      int numCounters = countersCount;//sizeof(counters) / sizeof(int);
+      for (int i = 0; i < numCounters; i++) {
         counters[i] = 0;
       }
-      long end = row->getSize();
+      int end = row->getSize();
       if (start >= end) {
         return false;
       }
       bool isWhite = !row->get(start);
-      long counterPosition = 0;
-      long i = start;
+      int counterPosition = 0;
+      int i = start;
       while (i < end) {
         bool pixel = row->get(i);
         if (pixel ^ isWhite) { // that is, exactly one is true
@@ -8143,12 +8143,12 @@ namespace zxing {
     UPCAReader::UPCAReader() : ean13Reader() {
     }
 
-    Ref<Result> UPCAReader::decodeRow(long rowNumber, Ref<BitArray> row) {
+    Ref<Result> UPCAReader::decodeRow(int rowNumber, Ref<BitArray> row) {
       return maybeReturnResult(ean13Reader.decodeRow(rowNumber, row));
     }
 
-    Ref<Result> UPCAReader::decodeRow(long rowNumber, Ref<BitArray> row, long startGuardBegin,
-        long startGuardEnd) {
+    Ref<Result> UPCAReader::decodeRow(int rowNumber, Ref<BitArray> row, int startGuardBegin,
+        int startGuardEnd) {
       return maybeReturnResult(ean13Reader.decodeRow(rowNumber, row, startGuardBegin,
           startGuardEnd));
     }
@@ -8157,7 +8157,7 @@ namespace zxing {
       return maybeReturnResult(ean13Reader.decode(image, hints));
     }
 
-    long UPCAReader::decodeMiddle(Ref<BitArray> row, long startGuardBegin, long startGuardEnd,
+    int UPCAReader::decodeMiddle(Ref<BitArray> row, int startGuardBegin, int startGuardEnd,
         std::string& resultString) {
       return ean13Reader.decodeMiddle(row, startGuardBegin, startGuardEnd, resultString);
     }
@@ -8213,20 +8213,20 @@ namespace zxing {
     /**
      * Start/end guard pattern.
      */
-    static const long START_END_PATTERN[3] = {1, 1, 1};
+    static const int START_END_PATTERN[3] = {1, 1, 1};
 
     /**
      * Pattern marking the middle of a UPC/EAN pattern, separating the two halves.
      */
-    static const long MIDDLE_PATTERN_LEN = 5;
-    static const long MIDDLE_PATTERN[MIDDLE_PATTERN_LEN] = {1, 1, 1, 1, 1};
+    static const int MIDDLE_PATTERN_LEN = 5;
+    static const int MIDDLE_PATTERN[MIDDLE_PATTERN_LEN] = {1, 1, 1, 1, 1};
 
     /**
      * "Odd", or "L" patterns used to encode UPC/EAN digits.
      */
-    const long L_PATTERNS_LEN = 10;
-    const long L_PATTERNS_SUB_LEN = 4;
-    const long L_PATTERNS[L_PATTERNS_LEN][L_PATTERNS_SUB_LEN] = {
+    const int L_PATTERNS_LEN = 10;
+    const int L_PATTERNS_SUB_LEN = 4;
+    const int L_PATTERNS[L_PATTERNS_LEN][L_PATTERNS_SUB_LEN] = {
       {3, 2, 1, 1}, // 0
       {2, 2, 2, 1}, // 1
       {2, 1, 2, 2}, // 2
@@ -8242,9 +8242,9 @@ namespace zxing {
     /**
      * As above but also including the "even", or "G" patterns used to encode UPC/EAN digits.
      */
-    const long L_AND_G_PATTERNS_LEN = 20;
-    const long L_AND_G_PATTERNS_SUB_LEN = 4;
-    const long L_AND_G_PATTERNS[L_AND_G_PATTERNS_LEN][L_AND_G_PATTERNS_SUB_LEN] = {
+    const int L_AND_G_PATTERNS_LEN = 20;
+    const int L_AND_G_PATTERNS_SUB_LEN = 4;
+    const int L_AND_G_PATTERNS[L_AND_G_PATTERNS_LEN][L_AND_G_PATTERNS_SUB_LEN] = {
       {3, 2, 1, 1}, // 0
       {2, 2, 2, 1}, // 1
       {2, 1, 2, 2}, // 2
@@ -8268,7 +8268,7 @@ namespace zxing {
     };
 
 
-    long UPCEANReader::getMIDDLE_PATTERN_LEN() {
+    int UPCEANReader::getMIDDLE_PATTERN_LEN() {
       return MIDDLE_PATTERN_LEN;
     }
 
@@ -8280,9 +8280,9 @@ namespace zxing {
     }
 
 
-    Ref<Result> UPCEANReader::decodeRow(long rowNumber, Ref<BitArray> row) {
-      long rangeStart;
-      long rangeEnd;
+    Ref<Result> UPCEANReader::decodeRow(int rowNumber, Ref<BitArray> row) {
+      int rangeStart;
+      int rangeEnd;
 			if (findStartGuardPattern(row, &rangeStart, &rangeEnd)) {
         try {
           return decodeRow(rowNumber, row, rangeStart, rangeEnd);
@@ -8292,17 +8292,17 @@ namespace zxing {
 			return Ref<Result>();
     }
 
-    Ref<Result> UPCEANReader::decodeRow(long rowNumber, Ref<BitArray> row, long startGuardBegin,
-        long startGuardEnd) {
+    Ref<Result> UPCEANReader::decodeRow(int rowNumber, Ref<BitArray> row, int startGuardBegin,
+        int startGuardEnd) {
       std::string tmpResultString;
       std::string& tmpResultStringRef = tmpResultString;
-      long endStart = decodeMiddle(row, startGuardBegin, startGuardEnd, tmpResultStringRef);
+      int endStart = decodeMiddle(row, startGuardBegin, startGuardEnd, tmpResultStringRef);
       if (endStart < 0) {
         return Ref<Result>();
       }
 
-      long endGuardBegin;
-      long endGuardEnd;
+      int endGuardBegin;
+      int endGuardEnd;
       if (!decodeEnd(row, endStart, &endGuardBegin, &endGuardEnd)) {
         return Ref<Result>();
       }
@@ -8333,15 +8333,15 @@ namespace zxing {
     }
 
     bool UPCEANReader::findStartGuardPattern(Ref<BitArray> row, int* rangeStart, int* rangeEnd) {
-      long nextStart = 0;
+      int nextStart = 0;
       while (findGuardPattern(row, nextStart, false, START_END_PATTERN,
           sizeof(START_END_PATTERN) / sizeof(int), rangeStart, rangeEnd)) {
-        long start = *rangeStart;
+        int start = *rangeStart;
         nextStart = *rangeEnd;
         // Make sure there is a quiet zone at least as big as the start pattern before the barcode.
         // If this check would run off the left edge of the image, do not accept this barcode,
         // as it is very likely to be a false positive.
-        long quietStart = start - (nextStart - start);
+        int quietStart = start - (nextStart - start);
         if (quietStart >= 0 && row->isRange(quietStart, start, false)) {
           return true;
         }
@@ -8349,15 +8349,15 @@ namespace zxing {
       return false;
     }
 
-    bool UPCEANReader::findGuardPattern(Ref<BitArray> row, long rowOffset, bool whiteFirst,
-        const long pattern[], long patternLen, int* start, int* end) {
-      long patternLength = patternLen;
-      long counters[patternLength];
-      long countersCount = sizeof(counters) / sizeof(int);
-      for (long i = 0; i < countersCount; i++) {
+    bool UPCEANReader::findGuardPattern(Ref<BitArray> row, int rowOffset, bool whiteFirst,
+        const int pattern[], int patternLen, int* start, int* end) {
+      int patternLength = patternLen;
+      int counters[patternLength];
+      int countersCount = sizeof(counters) / sizeof(int);
+      for (int i = 0; i < countersCount; i++) {
         counters[i] = 0;
       }
-      long width = row->getSize();
+      int width = row->getSize();
       bool isWhite = false;
       while (rowOffset < width) {
         isWhite = !row->get(rowOffset);
@@ -8367,9 +8367,9 @@ namespace zxing {
         rowOffset++;
       }
 
-      long counterPosition = 0;
-      long patternStart = rowOffset;
-      for (long x = rowOffset; x < width; x++) {
+      int counterPosition = 0;
+      int patternStart = rowOffset;
+      for (int x = rowOffset; x < width; x++) {
         bool pixel = row->get(x);
         if (pixel ^ isWhite) {
           counters[counterPosition]++;
@@ -8382,7 +8382,7 @@ namespace zxing {
               return true;
             }
             patternStart += counters[0] + counters[1];
-            for (long y = 2; y < patternLength; y++) {
+            for (int y = 2; y < patternLength; y++) {
               counters[y - 2] = counters[y];
             }
             counters[patternLength - 2] = 0;
@@ -8398,31 +8398,31 @@ namespace zxing {
       return false;
     }
 
-    bool UPCEANReader::decodeEnd(Ref<BitArray> row, long endStart, int* endGuardBegin,
+    bool UPCEANReader::decodeEnd(Ref<BitArray> row, int endStart, int* endGuardBegin,
         int* endGuardEnd) {
       return findGuardPattern(row, endStart, false, START_END_PATTERN,
           sizeof(START_END_PATTERN) / sizeof(int), endGuardBegin, endGuardEnd);
     }
 
-    long UPCEANReader::decodeDigit(Ref<BitArray> row, long counters[], long countersLen, long rowOffset,
+    int UPCEANReader::decodeDigit(Ref<BitArray> row, int counters[], int countersLen, int rowOffset,
         UPC_EAN_PATTERNS patternType) {
       if (!recordPattern(row, rowOffset, counters, countersLen)) {
         return -1;
       }
-      unsigned long bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
-      long bestMatch = -1;
+      unsigned int bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
+      int bestMatch = -1;
 
-      long max = 0;
+      int max = 0;
       switch (patternType) {
         case UPC_EAN_PATTERNS_L_PATTERNS:
           max = L_PATTERNS_LEN;
-          for (long i = 0; i < max; i++) {
-            long pattern[countersLen];
-            for(long j = 0; j< countersLen; j++){
+          for (int i = 0; i < max; i++) {
+            int pattern[countersLen];
+            for(int j = 0; j< countersLen; j++){
               pattern[j] = L_PATTERNS[i][j];
             }
 
-            unsigned long variance = patternMatchVariance(counters, countersLen, pattern,
+            unsigned int variance = patternMatchVariance(counters, countersLen, pattern,
                 MAX_INDIVIDUAL_VARIANCE);
             if (variance < bestVariance) {
               bestVariance = variance;
@@ -8432,13 +8432,13 @@ namespace zxing {
           break;
         case UPC_EAN_PATTERNS_L_AND_G_PATTERNS:
           max = L_AND_G_PATTERNS_LEN;
-          for (long i = 0; i < max; i++) {
-            long pattern[countersLen];
-            for(long j = 0; j< countersLen; j++){
+          for (int i = 0; i < max; i++) {
+            int pattern[countersLen];
+            for(int j = 0; j< countersLen; j++){
               pattern[j] = L_AND_G_PATTERNS[i][j];
             }
 
-            unsigned long variance = patternMatchVariance(counters, countersLen, pattern,
+            unsigned int variance = patternMatchVariance(counters, countersLen, pattern,
                 MAX_INDIVIDUAL_VARIANCE);
             if (variance < bestVariance) {
               bestVariance = variance;
@@ -8467,22 +8467,22 @@ namespace zxing {
      * @return true iff string of digits passes the UPC/EAN checksum algorithm
      */
     bool UPCEANReader::checkStandardUPCEANChecksum(std::string s) {
-      long length = s.length();
+      int length = s.length();
       if (length == 0) {
         return false;
       }
 
-      long sum = 0;
-      for (long i = length - 2; i >= 0; i -= 2) {
-        long digit = (int) s[i] - (int) '0';
+      int sum = 0;
+      for (int i = length - 2; i >= 0; i -= 2) {
+        int digit = (int) s[i] - (int) '0';
         if (digit < 0 || digit > 9) {
           return false;
         }
         sum += digit;
       }
       sum *= 3;
-      for (long i = length - 1; i >= 0; i -= 2) {
-        long digit = (int) s[i] - (int) '0';
+      for (int i = length - 1; i >= 0; i -= 2) {
+        int digit = (int) s[i] - (int) '0';
         if (digit < 0 || digit > 9) {
           return false;
         }
@@ -8525,14 +8525,14 @@ namespace zxing {
      * The pattern that marks the middle, and end, of a UPC-E pattern.
      * There is no "second half" to a UPC-E barcode.
      */
-    static const long MIDDLE_END_PATTERN[6] = {1, 1, 1, 1, 1, 1};
+    static const int MIDDLE_END_PATTERN[6] = {1, 1, 1, 1, 1, 1};
 
     /**
      * See {@link #L_AND_G_PATTERNS}; these values similarly represent patterns of
      * even-odd parity encodings of digits that imply both the number system (0 or 1)
      * used, and the check digit.
      */
-    static const long NUMSYS_AND_CHECK_DIGIT_PATTERNS[2][10] = {
+    static const int NUMSYS_AND_CHECK_DIGIT_PATTERNS[2][10] = {
       {0x38, 0x34, 0x32, 0x31, 0x2C, 0x26, 0x23, 0x2A, 0x29, 0x25},
       {0x07, 0x0B, 0x0D, 0x0E, 0x13, 0x19, 0x1C, 0x15, 0x16, 0x1A}
     };
@@ -8540,24 +8540,24 @@ namespace zxing {
     UPCEReader::UPCEReader() {
     }
 
-    long UPCEReader::decodeMiddle(Ref<BitArray> row, long startGuardBegin, long startGuardEnd,
+    int UPCEReader::decodeMiddle(Ref<BitArray> row, int startGuardBegin, int startGuardEnd,
         std::string& resultString) {
       (void)startGuardBegin;
-      const long countersLen = 4;
-      long counters[countersLen] = { 0, 0, 0, 0 };
+      const int countersLen = 4;
+      int counters[countersLen] = { 0, 0, 0, 0 };
 
-      long end = row->getSize();
-      long rowOffset = startGuardEnd;
-      long lgPatternFound = 0;
+      int end = row->getSize();
+      int rowOffset = startGuardEnd;
+      int lgPatternFound = 0;
 
-      for (long x = 0; x < 6 && rowOffset < end; x++) {
-        long bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
+      for (int x = 0; x < 6 && rowOffset < end; x++) {
+        int bestMatch = decodeDigit(row, counters, countersLen, rowOffset,
             UPC_EAN_PATTERNS_L_AND_G_PATTERNS);
         if (bestMatch < 0) {
           return -1;
         }
         resultString.append(1, (char) ('0' + bestMatch % 10));
-        for (long i = 0; i < countersLen; i++) {
+        for (int i = 0; i < countersLen; i++) {
           rowOffset += counters[i];
         }
         if (bestMatch >= 10) {
@@ -8571,7 +8571,7 @@ namespace zxing {
       return rowOffset;
     }
 
-    bool UPCEReader::decodeEnd(Ref<BitArray> row, long endStart, int* endGuardBegin,
+    bool UPCEReader::decodeEnd(Ref<BitArray> row, int endStart, int* endGuardBegin,
         int* endGuardEnd) {
       return findGuardPattern(row, endStart, true, MIDDLE_END_PATTERN,
           sizeof(MIDDLE_END_PATTERN) / sizeof(int), endGuardBegin, endGuardEnd);
@@ -8582,9 +8582,9 @@ namespace zxing {
     }
 
 
-    bool UPCEReader::determineNumSysAndCheckDigit(std::string& resultString, long lgPatternFound) {
-      for (long numSys = 0; numSys <= 1; numSys++) {
-        for (long d = 0; d < 10; d++) {
+    bool UPCEReader::determineNumSysAndCheckDigit(std::string& resultString, int lgPatternFound) {
+      for (int numSys = 0; numSys <= 1; numSys++) {
+        for (int d = 0; d < 10; d++) {
           if (lgPatternFound == NUMSYS_AND_CHECK_DIGIT_PATTERNS[numSys][d]) {
             resultString.insert(0, 1, (char) ('0' + numSys));
             resultString.append(1, (char) ('0' + d));
@@ -8671,16 +8671,16 @@ using std::string;
 namespace zxing {
 namespace qrcode {
 
-ErrorCorrectionLevel::ErrorCorrectionLevel(long inOrdinal,
-                                           long bits,
+ErrorCorrectionLevel::ErrorCorrectionLevel(int inOrdinal,
+                                           int bits,
                                            char const* name) :
   ordinal_(inOrdinal), bits_(bits), name_(name) {}
 
-long ErrorCorrectionLevel::ordinal() const {
+int ErrorCorrectionLevel::ordinal() const {
   return ordinal_;
 }
 
-long ErrorCorrectionLevel::bits() const {
+int ErrorCorrectionLevel::bits() const {
   return bits_;
 }
 
@@ -8692,7 +8692,7 @@ ErrorCorrectionLevel::operator string const& () const {
   return name_;
 }
 
-ErrorCorrectionLevel& ErrorCorrectionLevel::forBits(long bits) {
+ErrorCorrectionLevel& ErrorCorrectionLevel::forBits(int bits) {
   if (bits < 0 || bits >= N_LEVELS) {
     throw ReaderException("Ellegal error correction level bits");
   }
@@ -8704,7 +8704,7 @@ ErrorCorrectionLevel& ErrorCorrectionLevel::forBits(long bits) {
   ErrorCorrectionLevel ErrorCorrectionLevel::Q(2, 0x03, "Q");
   ErrorCorrectionLevel ErrorCorrectionLevel::H(3, 0x02, "H");
 ErrorCorrectionLevel *ErrorCorrectionLevel::FOR_BITS[] = { &M, &L, &H, &Q };
-long ErrorCorrectionLevel::N_LEVELS = 4;
+int ErrorCorrectionLevel::N_LEVELS = 4;
 
 }
 }
@@ -8739,19 +8739,19 @@ namespace qrcode {
 
 using namespace std;
 
-long FormatInformation::FORMAT_INFO_MASK_QR = 0x5412;
-long FormatInformation::FORMAT_INFO_DECODE_LOOKUP[][2] = { { 0x5412, 0x00 }, { 0x5125, 0x01 }, { 0x5E7C, 0x02 }, {
+int FormatInformation::FORMAT_INFO_MASK_QR = 0x5412;
+int FormatInformation::FORMAT_INFO_DECODE_LOOKUP[][2] = { { 0x5412, 0x00 }, { 0x5125, 0x01 }, { 0x5E7C, 0x02 }, {
     0x5B4B, 0x03 }, { 0x45F9, 0x04 }, { 0x40CE, 0x05 }, { 0x4F97, 0x06 }, { 0x4AA0, 0x07 }, { 0x77C4, 0x08 }, {
     0x72F3, 0x09 }, { 0x7DAA, 0x0A }, { 0x789D, 0x0B }, { 0x662F, 0x0C }, { 0x6318, 0x0D }, { 0x6C41, 0x0E }, {
     0x6976, 0x0F }, { 0x1689, 0x10 }, { 0x13BE, 0x11 }, { 0x1CE7, 0x12 }, { 0x19D0, 0x13 }, { 0x0762, 0x14 }, {
     0x0255, 0x15 }, { 0x0D0C, 0x16 }, { 0x083B, 0x17 }, { 0x355F, 0x18 }, { 0x3068, 0x19 }, { 0x3F31, 0x1A }, {
     0x3A06, 0x1B }, { 0x24B4, 0x1C }, { 0x2183, 0x1D }, { 0x2EDA, 0x1E }, { 0x2BED, 0x1F },
 };
-long FormatInformation::N_FORMAT_INFO_DECODE_LOOKUPS = 32;
+int FormatInformation::N_FORMAT_INFO_DECODE_LOOKUPS = 32;
 
-long FormatInformation::BITS_SET_IN_HALF_BYTE[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+int FormatInformation::BITS_SET_IN_HALF_BYTE[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
-FormatInformation::FormatInformation(long formatInfo) :
+FormatInformation::FormatInformation(int formatInfo) :
     errorCorrectionLevel_(ErrorCorrectionLevel::forBits((formatInfo >> 3) & 0x03)), dataMask_(
       (unsigned char)(formatInfo & 0x07)) {
 }
@@ -8764,7 +8764,7 @@ unsigned char FormatInformation::getDataMask() {
   return dataMask_;
 }
 
-long FormatInformation::numBitsDiffering(unsigned long a, unsigned long b) {
+int FormatInformation::numBitsDiffering(unsigned int a, unsigned int b) {
   a ^= b;
   return BITS_SET_IN_HALF_BYTE[a & 0x0F] + BITS_SET_IN_HALF_BYTE[(a >> 4 & 0x0F)] + BITS_SET_IN_HALF_BYTE[(a >> 8
          & 0x0F)] + BITS_SET_IN_HALF_BYTE[(a >> 12 & 0x0F)] + BITS_SET_IN_HALF_BYTE[(a >> 16 & 0x0F)]
@@ -8772,7 +8772,7 @@ long FormatInformation::numBitsDiffering(unsigned long a, unsigned long b) {
          + BITS_SET_IN_HALF_BYTE[(a >> 28 & 0x0F)];
 }
 
-Ref<FormatInformation> FormatInformation::decodeFormatInformation(long maskedFormatInfo1, long maskedFormatInfo2) {
+Ref<FormatInformation> FormatInformation::decodeFormatInformation(int maskedFormatInfo1, int maskedFormatInfo2) {
   Ref<FormatInformation> result(doDecodeFormatInformation(maskedFormatInfo1, maskedFormatInfo2));
   if (result != 0) {
     return result;
@@ -8783,19 +8783,19 @@ Ref<FormatInformation> FormatInformation::decodeFormatInformation(long maskedFor
   return doDecodeFormatInformation(maskedFormatInfo1 ^ FORMAT_INFO_MASK_QR,
                                    maskedFormatInfo2  ^ FORMAT_INFO_MASK_QR);
 }
-Ref<FormatInformation> FormatInformation::doDecodeFormatInformation(long maskedFormatInfo1, long maskedFormatInfo2) {
-  // Find the long in FORMAT_INFO_DECODE_LOOKUP with fewest bits differing
-  long bestDifference = numeric_limits<int>::max();
-  long bestFormatInfo = 0;
-  for (long i = 0; i < N_FORMAT_INFO_DECODE_LOOKUPS; i++) {
+Ref<FormatInformation> FormatInformation::doDecodeFormatInformation(int maskedFormatInfo1, int maskedFormatInfo2) {
+  // Find the int in FORMAT_INFO_DECODE_LOOKUP with fewest bits differing
+  int bestDifference = numeric_limits<int>::max();
+  int bestFormatInfo = 0;
+  for (int i = 0; i < N_FORMAT_INFO_DECODE_LOOKUPS; i++) {
     int* decodeInfo = FORMAT_INFO_DECODE_LOOKUP[i];
-    long targetInfo = decodeInfo[0];
+    int targetInfo = decodeInfo[0];
     if (targetInfo == maskedFormatInfo1 || targetInfo == maskedFormatInfo2) {
       // Found an exact match
       Ref<FormatInformation> result(new FormatInformation(decodeInfo[1]));
       return result;
     }
-    long bitsDifference = numBitsDiffering(maskedFormatInfo1, targetInfo);
+    int bitsDifference = numBitsDiffering(maskedFormatInfo1, targetInfo);
     if (bitsDifference < bestDifference) {
       bestFormatInfo = decodeInfo[1];
       bestDifference = bitsDifference;
@@ -8951,28 +8951,28 @@ namespace zxing {
 namespace qrcode {
 using namespace std;
 
-ECB::ECB(long count, long dataCodewords) :
+ECB::ECB(int count, int dataCodewords) :
     count_(count), dataCodewords_(dataCodewords) {
 }
 
-long ECB::getCount() {
+int ECB::getCount() {
   return count_;
 }
 
-long ECB::getDataCodewords() {
+int ECB::getDataCodewords() {
   return dataCodewords_;
 }
 
-ECBlocks::ECBlocks(long ecCodewords, ECB *ecBlocks) :
+ECBlocks::ECBlocks(int ecCodewords, ECB *ecBlocks) :
     ecCodewords_(ecCodewords), ecBlocks_(1, ecBlocks) {
 }
 
-ECBlocks::ECBlocks(long ecCodewords, ECB *ecBlocks1, ECB *ecBlocks2) :
+ECBlocks::ECBlocks(int ecCodewords, ECB *ecBlocks1, ECB *ecBlocks2) :
     ecCodewords_(ecCodewords), ecBlocks_(1, ecBlocks1) {
   ecBlocks_.push_back(ecBlocks2);
 }
 
-long ECBlocks::getECCodewords() {
+int ECBlocks::getECCodewords() {
   return ecCodewords_;
 }
 
@@ -8986,16 +8986,16 @@ ECBlocks::~ECBlocks() {
   }
 }
 
-unsigned long Version::VERSION_DECODE_INFO[] = { 0x07C94, 0x085BC, 0x09A99, 0x0A4D3, 0x0BBF6, 0x0C762, 0x0D847, 0x0E60D,
+unsigned int Version::VERSION_DECODE_INFO[] = { 0x07C94, 0x085BC, 0x09A99, 0x0A4D3, 0x0BBF6, 0x0C762, 0x0D847, 0x0E60D,
     0x0F928, 0x10B78, 0x1145D, 0x12A17, 0x13532, 0x149A6, 0x15683, 0x168C9, 0x177EC, 0x18EC4, 0x191E1, 0x1AFAB,
     0x1B08E, 0x1CC1A, 0x1D33F, 0x1ED75, 0x1F250, 0x209D5, 0x216F0, 0x228BA, 0x2379F, 0x24B0B, 0x2542E, 0x26A64,
     0x27541, 0x28C69
                                               };
-long Version::N_VERSION_DECODE_INFOS = 34;
+int Version::N_VERSION_DECODE_INFOS = 34;
 vector<Ref<Version> > Version::VERSIONS;
-static long N_VERSIONS = Version::buildVersions();
+static int N_VERSIONS = Version::buildVersions();
 
-long Version::getVersionNumber() {
+int Version::getVersionNumber() {
   return versionNumber_;
 }
 
@@ -9003,11 +9003,11 @@ vector<int> &Version::getAlignmentPatternCenters() {
   return alignmentPatternCenters_;
 }
 
-long Version::getTotalCodewords() {
+int Version::getTotalCodewords() {
   return totalCodewords_;
 }
 
-long Version::getDimensionForVersion() {
+int Version::getDimensionForVersion() {
   return 17 + 4 * versionNumber_;
 }
 
@@ -9015,14 +9015,14 @@ ECBlocks& Version::getECBlocksForLevel(ErrorCorrectionLevel &ecLevel) {
   return *ecBlocks_[ecLevel.ordinal()];
 }
 
-Version *Version::getProvisionalVersionForDimension(long dimension) {
+Version *Version::getProvisionalVersionForDimension(int dimension) {
   if (dimension % 4 != 1) {
     throw ReaderException("Dimension must be 1 mod 4");
   }
   return Version::getVersionForNumber((dimension - 17) >> 2);
 }
 
-Version *Version::getVersionForNumber(long versionNumber) {
+Version *Version::getVersionForNumber(int versionNumber) {
   if (versionNumber < 1 || versionNumber > N_VERSIONS) {
     throw ReaderException("versionNumber must be between 1 and 40");
   }
@@ -9030,7 +9030,7 @@ Version *Version::getVersionForNumber(long versionNumber) {
   return VERSIONS[versionNumber - 1];
 }
 
-Version::Version(long versionNumber, vector<int> *alignmentPatternCenters, ECBlocks *ecBlocks1, ECBlocks *ecBlocks2,
+Version::Version(int versionNumber, vector<int> *alignmentPatternCenters, ECBlocks *ecBlocks1, ECBlocks *ecBlocks2,
                  ECBlocks *ecBlocks3, ECBlocks *ecBlocks4) :
     versionNumber_(versionNumber), alignmentPatternCenters_(*alignmentPatternCenters), ecBlocks_(4), totalCodewords_(0) {
   ecBlocks_[0] = ecBlocks1;
@@ -9038,8 +9038,8 @@ Version::Version(long versionNumber, vector<int> *alignmentPatternCenters, ECBlo
   ecBlocks_[2] = ecBlocks3;
   ecBlocks_[3] = ecBlocks4;
 
-  long total = 0;
-  long ecCodewords = ecBlocks1->getECCodewords();
+  int total = 0;
+  int ecCodewords = ecBlocks1->getECCodewords();
   vector<ECB*> &ecbArray = ecBlocks1->getECBlocks();
   for (size_t i = 0; i < ecbArray.size(); i++) {
     ECB *ecBlock = ecbArray[i];
@@ -9055,10 +9055,10 @@ Version::~Version() {
   }
 }
 
-Version *Version::decodeVersionInformation(unsigned long versionBits) {
-  long bestDifference = numeric_limits<int>::max();
+Version *Version::decodeVersionInformation(unsigned int versionBits) {
+  int bestDifference = numeric_limits<int>::max();
   size_t bestVersion = 0;
-  for (long i = 0; i < N_VERSION_DECODE_INFOS; i++) {
+  for (int i = 0; i < N_VERSION_DECODE_INFOS; i++) {
     unsigned targetVersion = VERSION_DECODE_INFO[i];
     // Do the version info bits match exactly? done.
     if (targetVersion == versionBits) {
@@ -9066,7 +9066,7 @@ Version *Version::decodeVersionInformation(unsigned long versionBits) {
     }
     // Otherwise see if this is the closest to a real version info bit
     // string we have seen so far
-    long bitsDifference = FormatInformation::numBitsDiffering(versionBits, targetVersion);
+    int bitsDifference = FormatInformation::numBitsDiffering(versionBits, targetVersion);
     if (bitsDifference < bestDifference) {
       bestVersion = i + 7;
       bestDifference = bitsDifference;
@@ -9082,7 +9082,7 @@ Version *Version::decodeVersionInformation(unsigned long versionBits) {
 }
 
 Ref<BitMatrix> Version::buildFunctionPattern() {
-  long dimension = getDimensionForVersion();
+  int dimension = getDimensionForVersion();
   Ref<BitMatrix> functionPattern(new BitMatrix(dimension));
 
 
@@ -9097,7 +9097,7 @@ Ref<BitMatrix> Version::buildFunctionPattern() {
   // Alignment patterns
   size_t max = alignmentPatternCenters_.size();
   for (size_t x = 0; x < max; x++) {
-    long i = alignmentPatternCenters_[x] - 2;
+    int i = alignmentPatternCenters_[x] - 2;
     for (size_t y = 0; y < max; y++) {
       if ((x == 0 && (y == 0 || y == max - 1)) || (x == max - 1 && y == 0)) {
         // No alignment patterns near the three finder patterns
@@ -9139,7 +9139,7 @@ static vector<int> *intArray(size_t n...) {
   return result;
 }
 
-long Version::buildVersions() {
+int Version::buildVersions() {
   VERSIONS.push_back(Ref<Version>(new Version(1, intArray(0),
                                   new ECBlocks(7, new ECB(1, 19)),
                                   new ECBlocks(10, new ECB(1, 16)),
@@ -9508,7 +9508,7 @@ long Version::buildVersions() {
 namespace zxing {
 namespace qrcode {
 
-long BitMatrixParser::copyBit(size_t x, size_t y, long versionBits) {
+int BitMatrixParser::copyBit(size_t x, size_t y, int versionBits) {
   return bitMatrix_->get(x, y) ? (versionBits << 1) | 0x1 : versionBits << 1;
 }
 
@@ -9526,8 +9526,8 @@ Ref<FormatInformation> BitMatrixParser::readFormatInformation() {
   }
 
   // Read top-left format info bits
-  long formatInfoBits1 = 0;
-  for (long i = 0; i < 6; i++) {
+  int formatInfoBits1 = 0;
+  for (int i = 0; i < 6; i++) {
     formatInfoBits1 = copyBit(i, 8, formatInfoBits1);
   }
   // .. and skip a bit in the timing pattern ...
@@ -9535,18 +9535,18 @@ Ref<FormatInformation> BitMatrixParser::readFormatInformation() {
   formatInfoBits1 = copyBit(8, 8, formatInfoBits1);
   formatInfoBits1 = copyBit(8, 7, formatInfoBits1);
   // .. and skip a bit in the timing pattern ...
-  for (long j = 5; j >= 0; j--) {
+  for (int j = 5; j >= 0; j--) {
     formatInfoBits1 = copyBit(8, j, formatInfoBits1);
   }
 
   // Read the top-right/bottom-left pattern
-  long dimension = bitMatrix_->getDimension();
-  long formatInfoBits2 = 0;
-  long jMin = dimension - 7;
-  for (long j = dimension - 1; j >= jMin; j--) {
+  int dimension = bitMatrix_->getDimension();
+  int formatInfoBits2 = 0;
+  int jMin = dimension - 7;
+  for (int j = dimension - 1; j >= jMin; j--) {
     formatInfoBits2 = copyBit(8, j, formatInfoBits2);
   }
-  for (long i = dimension - 8; i < dimension; i++) {
+  for (int i = dimension - 8; i < dimension; i++) {
     formatInfoBits2 = copyBit(i, 8, formatInfoBits2);
   }
 
@@ -9562,18 +9562,18 @@ Version *BitMatrixParser::readVersion() {
     return parsedVersion_;
   }
 
-  long dimension = bitMatrix_->getDimension();
+  int dimension = bitMatrix_->getDimension();
 
-  long provisionalVersion = (dimension - 17) >> 2;
+  int provisionalVersion = (dimension - 17) >> 2;
   if (provisionalVersion <= 6) {
     return Version::getVersionForNumber(provisionalVersion);
   }
 
   // Read top-right version info: 3 wide by 6 tall
-  long versionBits = 0;
-  for (long y = 5; y >= 0; y--) {
-    long xMin = dimension - 11;
-    for (long x = dimension - 9; x >= xMin; x--) {
+  int versionBits = 0;
+  for (int y = 5; y >= 0; y--) {
+    int xMin = dimension - 11;
+    for (int x = dimension - 9; x >= xMin; x--) {
       versionBits = copyBit(x, y, versionBits);
     }
   }
@@ -9585,9 +9585,9 @@ Version *BitMatrixParser::readVersion() {
 
   // Hmm, failed. Try bottom left: 6 wide by 3 tall
   versionBits = 0;
-  for (long x = 5; x >= 0; x--) {
-    long yMin = dimension - 11;
-    for (long y = dimension - 9; y >= yMin; y--) {
+  for (int x = 5; x >= 0; x--) {
+    int yMin = dimension - 11;
+    for (int y = dimension - 9; y >= yMin; y--) {
       versionBits = copyBit(x, y, versionBits);
     }
   }
@@ -9611,7 +9611,7 @@ ArrayRef<unsigned char> BitMatrixParser::readCodewords() {
   // some bits from reading as we wind through the bit matrix.
   DataMask &dataMask = DataMask::forReference((int)formatInfo->getDataMask());
   //	cout << (int)formatInfo->getDataMask() << endl;
-  long dimension = bitMatrix_->getDimension();
+  int dimension = bitMatrix_->getDimension();
   dataMask.unmaskBitMatrix(*bitMatrix_, dimension);
 
 
@@ -9625,20 +9625,20 @@ ArrayRef<unsigned char> BitMatrixParser::readCodewords() {
 
   bool readingUp = true;
   ArrayRef<unsigned char> result(version->getTotalCodewords());
-  long resultOffset = 0;
-  long currentByte = 0;
-  long bitsRead = 0;
+  int resultOffset = 0;
+  int currentByte = 0;
+  int bitsRead = 0;
   // Read columns in pairs, from right to left
-  for (long x = dimension - 1; x > 0; x -= 2) {
+  for (int x = dimension - 1; x > 0; x -= 2) {
     if (x == 6) {
       // Skip whole column with vertical alignment pattern;
       // saves time and makes the other code proceed more cleanly
       x--;
     }
     // Read alternatingly from bottom to top then top to bottom
-    for (long counter = 0; counter < dimension; counter++) {
-      long y = readingUp ? dimension - 1 - counter : counter;
-      for (long col = 0; col < 2; col++) {
+    for (int counter = 0; counter < dimension; counter++) {
+      int y = readingUp ? dimension - 1 - counter : counter;
+      for (int col = 0; col < 2; col++) {
         // Ignore bits covered by the function pattern
         if (!functionPattern->get(x - col, y)) {
           // Read a bit
@@ -9698,11 +9698,11 @@ namespace qrcode {
 
 using namespace std;
 
-DataBlock::DataBlock(long numDataCodewords, ArrayRef<unsigned char> codewords) :
+DataBlock::DataBlock(int numDataCodewords, ArrayRef<unsigned char> codewords) :
     numDataCodewords_(numDataCodewords), codewords_(codewords) {
 }
 
-long DataBlock::getNumDataCodewords() {
+int DataBlock::getNumDataCodewords() {
   return numDataCodewords_;
 }
 
@@ -9721,7 +9721,7 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
 
 
   // First count the total number of data blocks
-  long totalBlocks = 0;
+  int totalBlocks = 0;
   vector<ECB*> ecBlockArray = ecBlocks.getECBlocks();
   for (size_t i = 0; i < ecBlockArray.size(); i++) {
     totalBlocks += ecBlockArray[i]->getCount();
@@ -9729,12 +9729,12 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
 
   // Now establish DataBlocks of the appropriate size and number of data codewords
   std::vector<Ref<DataBlock> > result(totalBlocks);
-  long numResultBlocks = 0;
+  int numResultBlocks = 0;
   for (size_t j = 0; j < ecBlockArray.size(); j++) {
     ECB *ecBlock = ecBlockArray[j];
-    for (long i = 0; i < ecBlock->getCount(); i++) {
-      long numDataCodewords = ecBlock->getDataCodewords();
-      long numBlockCodewords = ecBlocks.getECCodewords() + numDataCodewords;
+    for (int i = 0; i < ecBlock->getCount(); i++) {
+      int numDataCodewords = ecBlock->getDataCodewords();
+      int numBlockCodewords = ecBlocks.getECCodewords() + numDataCodewords;
       ArrayRef<unsigned char> buffer(numBlockCodewords);
       Ref<DataBlock> blockRef(new DataBlock(numDataCodewords, buffer));
       result[numResultBlocks++] = blockRef;
@@ -9743,10 +9743,10 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
 
   // All blocks have the same amount of data, except that the last n
   // (where n may be 0) have 1 more byte. Figure out where these start.
-  long shorterBlocksTotalCodewords = result[0]->codewords_.size();
-  long longerBlocksStartAt = result.size() - 1;
+  int shorterBlocksTotalCodewords = result[0]->codewords_.size();
+  int longerBlocksStartAt = result.size() - 1;
   while (longerBlocksStartAt >= 0) {
-    long numCodewords = result[longerBlocksStartAt]->codewords_.size();
+    int numCodewords = result[longerBlocksStartAt]->codewords_.size();
     if (numCodewords == shorterBlocksTotalCodewords) {
       break;
     }
@@ -9757,24 +9757,24 @@ std::vector<Ref<DataBlock> > DataBlock::getDataBlocks(ArrayRef<unsigned char> ra
   }
   longerBlocksStartAt++;
 
-  long shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks.getECCodewords();
+  int shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks.getECCodewords();
   // The last elements of result may be 1 element longer;
   // first fill out as many elements as all of them have
-  long rawCodewordsOffset = 0;
-  for (long i = 0; i < shorterBlocksNumDataCodewords; i++) {
-    for (long j = 0; j < numResultBlocks; j++) {
+  int rawCodewordsOffset = 0;
+  for (int i = 0; i < shorterBlocksNumDataCodewords; i++) {
+    for (int j = 0; j < numResultBlocks; j++) {
       result[j]->codewords_[i] = rawCodewords[rawCodewordsOffset++];
     }
   }
   // Fill out the last data block in the longer ones
-  for (long j = longerBlocksStartAt; j < numResultBlocks; j++) {
+  for (int j = longerBlocksStartAt; j < numResultBlocks; j++) {
     result[j]->codewords_[shorterBlocksNumDataCodewords] = rawCodewords[rawCodewordsOffset++];
   }
   // Now add in error correction blocks
-  long max = result[0]->codewords_.size();
-  for (long i = shorterBlocksNumDataCodewords; i < max; i++) {
-    for (long j = 0; j < numResultBlocks; j++) {
-      long iOffset = j < longerBlocksStartAt ? i : i + 1;
+  int max = result[0]->codewords_.size();
+  for (int i = shorterBlocksNumDataCodewords; i < max; i++) {
+    for (int j = 0; j < numResultBlocks; j++) {
+      int iOffset = j < longerBlocksStartAt ? i : i + 1;
       result[j]->codewords_[iOffset] = rawCodewords[rawCodewordsOffset++];
     }
   }
@@ -9827,9 +9827,9 @@ DataMask::~DataMask() {
 }
 
 vector<Ref<DataMask> > DataMask::DATA_MASKS;
-static long N_DATA_MASKS = DataMask::buildDataMasks();
+static int N_DATA_MASKS = DataMask::buildDataMasks();
 
-DataMask &DataMask::forReference(long reference) {
+DataMask &DataMask::forReference(int reference) {
   if (reference < 0 || reference > 7) {
     throw IllegalArgumentException("reference must be between 0 and 7");
   }
@@ -9936,7 +9936,7 @@ public:
   }
 };
 
-long DataMask::buildDataMasks() {
+int DataMask::buildDataMasks() {
   DATA_MASKS.push_back(Ref<DataMask> (new DataMask000()));
   DATA_MASKS.push_back(Ref<DataMask> (new DataMask001()));
   DATA_MASKS.push_back(Ref<DataMask> (new DataMask010()));
@@ -10005,7 +10005,7 @@ const char DecodedBitStreamParser::ALPHANUMERIC_CHARS[] =
   'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':'
 };
 
-namespace {long GB2312_SUBSET = 1;}
+namespace {int GB2312_SUBSET = 1;}
 
 void DecodedBitStreamParser::append(std::string &result,
                                     string const& in,
@@ -10028,7 +10028,7 @@ void DecodedBitStreamParser::append(std::string &result,
     return;
   }
 
-  const long maxOut = 4 * nIn + 1;
+  const int maxOut = 4 * nIn + 1;
   unsigned char* bufOut = new unsigned char[maxOut];
 
   ICONV_CONST char *fromPtr = (ICONV_CONST char *)bufIn;
@@ -10046,7 +10046,7 @@ void DecodedBitStreamParser::append(std::string &result,
   }
   iconv_close(cd);
 
-  long nResult = maxOut - nTo;
+  int nResult = maxOut - nTo;
   bufOut[nResult] = '\0';
   result.append((const char *)bufOut);
   delete[] bufOut;
@@ -10057,7 +10057,7 @@ void DecodedBitStreamParser::append(std::string &result,
 
 void DecodedBitStreamParser::decodeHanziSegment(Ref<BitSource> bits_,
                                                 string& result,
-                                                long count) {
+                                                int count) {
     BitSource& bits (*bits_);
     // Don't crash trying to read more bits than we have available.
     if (count * 13 > bits.available()) {
@@ -10068,11 +10068,11 @@ void DecodedBitStreamParser::decodeHanziSegment(Ref<BitSource> bits_,
     // and decode as GB2312 afterwards
     size_t nBytes = 2 * count;
     unsigned char* buffer = new unsigned char[nBytes];
-    long offset = 0;
+    int offset = 0;
     while (count > 0) {
       // Each 13 bits encodes a 2-byte character
-      long twoBytes = bits.readBits(13);
-      long assembledTwoBytes = ((twoBytes / 0x060) << 8) | (twoBytes % 0x060);
+      int twoBytes = bits.readBits(13);
+      int assembledTwoBytes = ((twoBytes / 0x060) << 8) | (twoBytes % 0x060);
       if (assembledTwoBytes < 0x003BF) {
         // In the 0xA1A1 to 0xAAFE range
         assembledTwoBytes += 0x0A1A1;
@@ -10096,17 +10096,17 @@ void DecodedBitStreamParser::decodeHanziSegment(Ref<BitSource> bits_,
     delete [] buffer;
   }
 
-void DecodedBitStreamParser::decodeKanjiSegment(Ref<BitSource> bits, std::string &result, long count) {
+void DecodedBitStreamParser::decodeKanjiSegment(Ref<BitSource> bits, std::string &result, int count) {
   // Each character will require 2 bytes. Read the characters as 2-byte pairs
   // and decode as Shift_JIS afterwards
   size_t nBytes = 2 * count;
   unsigned char* buffer = new unsigned char[nBytes];
-  long offset = 0;
+  int offset = 0;
   while (count > 0) {
     // Each 13 bits encodes a 2-byte character
 
-    long twoBytes = bits->readBits(13);
-    long assembledTwoBytes = ((twoBytes / 0x0C0) << 8) | (twoBytes % 0x0C0);
+    int twoBytes = bits->readBits(13);
+    int assembledTwoBytes = ((twoBytes / 0x0C0) << 8) | (twoBytes % 0x0C0);
     if (assembledTwoBytes < 0x01F00) {
       // In the 0x8140 to 0x9FFC range
       assembledTwoBytes += 0x08140;
@@ -10126,11 +10126,11 @@ void DecodedBitStreamParser::decodeKanjiSegment(Ref<BitSource> bits, std::string
 
 void DecodedBitStreamParser::decodeByteSegment(Ref<BitSource> bits_,
                                                string& result,
-                                               long count,
+                                               int count,
                                                CharacterSetECI* currentCharacterSetECI,
                                                ArrayRef< ArrayRef<unsigned char> >& byteSegments,
                                                Hashtable const& hints) {
-  long nBytes = count;
+  int nBytes = count;
   BitSource& bits (*bits_);
   // Don't crash trying to read more bits than we have available.
   if (count << 3 > bits.available()) {
@@ -10139,7 +10139,7 @@ void DecodedBitStreamParser::decodeByteSegment(Ref<BitSource> bits_,
 
   ArrayRef<unsigned char> bytes_ (count);
   unsigned char* readBytes = &(*bytes_)[0];
-  for (long i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     readBytes[i] = (unsigned char) bits.readBits(8);
   }
   string encoding;
@@ -10161,17 +10161,17 @@ void DecodedBitStreamParser::decodeByteSegment(Ref<BitSource> bits_,
   byteSegments->values().push_back(bytes_);
 }
 
-void DecodedBitStreamParser::decodeNumericSegment(Ref<BitSource> bits, std::string &result, long count) {
-  long nBytes = count;
+void DecodedBitStreamParser::decodeNumericSegment(Ref<BitSource> bits, std::string &result, int count) {
+  int nBytes = count;
   unsigned char* bytes = new unsigned char[nBytes];
-  long i = 0;
+  int i = 0;
   // Read three digits at a time
   while (count >= 3) {
     // Each 10 bits encodes three digits
     if (bits->available() < 10) {
       throw ReaderException("format exception");
     }
-    long threeDigitsBits = bits->readBits(10);
+    int threeDigitsBits = bits->readBits(10);
     if (threeDigitsBits >= 1000) {
       ostringstream s;
       s << "Illegal value for 3-digit unit: " << threeDigitsBits;
@@ -10188,7 +10188,7 @@ void DecodedBitStreamParser::decodeNumericSegment(Ref<BitSource> bits, std::stri
       throw ReaderException("format exception");
     }
     // Two digits left over to read, encoded in 7 bits
-    long twoDigitsBits = bits->readBits(7);
+    int twoDigitsBits = bits->readBits(7);
     if (twoDigitsBits >= 100) {
       ostringstream s;
       s << "Illegal value for 2-digit unit: " << twoDigitsBits;
@@ -10202,7 +10202,7 @@ void DecodedBitStreamParser::decodeNumericSegment(Ref<BitSource> bits, std::stri
       throw ReaderException("format exception");
     }
     // One digit left over to read
-    long digitBits = bits->readBits(4);
+    int digitBits = bits->readBits(4);
     if (digitBits >= 10) {
       ostringstream s;
       s << "Illegal value for digit unit: " << digitBits;
@@ -10224,13 +10224,13 @@ char DecodedBitStreamParser::toAlphaNumericChar(size_t value) {
 
 void DecodedBitStreamParser::decodeAlphanumericSegment(Ref<BitSource> bits_,
                                                        string& result,
-                                                       long count,
+                                                       int count,
                                                        bool fc1InEffect) {
   BitSource& bits (*bits_);
   ostringstream bytes;
   // Read two characters at a time
   while (count > 1) {
-    long nextTwoCharsBits = bits.readBits(11);
+    int nextTwoCharsBits = bits.readBits(11);
     bytes << toAlphaNumericChar(nextTwoCharsBits / 45);
     bytes << toAlphaNumericChar(nextTwoCharsBits % 45);
     count -= 2;
@@ -10263,20 +10263,20 @@ void DecodedBitStreamParser::decodeAlphanumericSegment(Ref<BitSource> bits_,
 }
 
 namespace {
-  long parseECIValue(BitSource bits) {
-    long firstByte = bits.readBits(8);
+  int parseECIValue(BitSource bits) {
+    int firstByte = bits.readBits(8);
     if ((firstByte & 0x80) == 0) {
       // just one byte
       return firstByte & 0x7F;
     }
     if ((firstByte & 0xC0) == 0x80) {
       // two bytes
-      long secondByte = bits.readBits(8);
+      int secondByte = bits.readBits(8);
       return ((firstByte & 0x3F) << 8) | secondByte;
     }
     if ((firstByte & 0xE0) == 0xC0) {
       // three bytes
-      long secondThirdBytes = bits.readBits(16);
+      int secondThirdBytes = bits.readBits(16);
       return ((firstByte & 0x1F) << 16) | secondThirdBytes;
     }
     throw IllegalArgumentException("Bad ECI bits starting with byte ");
@@ -10318,7 +10318,7 @@ DecodedBitStreamParser::decode(ArrayRef<unsigned char> bytes,
         bits.readBits(16);
       } else if (mode == &Mode::ECI) {
         // Count doesn't apply to ECI
-        long value = parseECIValue(bits);
+        int value = parseECIValue(bits);
         currentCharacterSetECI = CharacterSetECI::getCharacterSetECIByValue(value);
         if (currentCharacterSetECI == 0) {
           throw FormatException();
@@ -10327,15 +10327,15 @@ DecodedBitStreamParser::decode(ArrayRef<unsigned char> bytes,
         // First handle Hanzi mode which does not start with character count
         if (mode == &Mode::HANZI) {
           //chinese mode contains a sub set indicator right after mode indicator
-          long subset = bits.readBits(4);
-          long countHanzi = bits.readBits(mode->getCharacterCountBits(version));
+          int subset = bits.readBits(4);
+          int countHanzi = bits.readBits(mode->getCharacterCountBits(version));
           if (subset == GB2312_SUBSET) {
             decodeHanziSegment(bits_, result, countHanzi);
           }
         } else {
           // "Normal" QR code modes:
           // How many characters will follow, encoded in this mode?
-          long count = bits.readBits(mode->getCharacterCountBits(version));
+          int count = bits.readBits(mode->getCharacterCountBits(version));
           if (mode == &Mode::NUMERIC) {
             decodeNumericSegment(bits_, result, count);
           } else if (mode == &Mode::ALPHANUMERIC) {
@@ -10396,13 +10396,13 @@ Decoder::Decoder() :
     rsDecoder_(GF256::QR_CODE_FIELD) {
 }
 
-void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, long numDataCodewords) {
-  long numCodewords = codewordBytes->size();
+void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, int numDataCodewords) {
+  int numCodewords = codewordBytes->size();
   ArrayRef<int> codewordInts(numCodewords);
-  for (long i = 0; i < numCodewords; i++) {
+  for (int i = 0; i < numCodewords; i++) {
     codewordInts[i] = codewordBytes[i] & 0xff;
   }
-  long numECCodewords = numCodewords - numDataCodewords;
+  int numECCodewords = numCodewords - numDataCodewords;
 
   try {
     rsDecoder_.decode(codewordInts, numECCodewords);
@@ -10411,7 +10411,7 @@ void Decoder::correctErrors(ArrayRef<unsigned char> codewordBytes, long numDataC
     throw rex;
   }
 
-  for (long i = 0; i < numDataCodewords; i++) {
+  for (int i = 0; i < numDataCodewords; i++) {
     codewordBytes[i] = (unsigned char)codewordInts[i];
   }
 }
@@ -10433,21 +10433,21 @@ Ref<DecoderResult> Decoder::decode(Ref<BitMatrix> bits) {
 
 
   // Count total number of data bytes
-  long totalBytes = 0;
+  int totalBytes = 0;
   for (size_t i = 0; i < dataBlocks.size(); i++) {
     totalBytes += dataBlocks[i]->getNumDataCodewords();
   }
   ArrayRef<unsigned char> resultBytes(totalBytes);
-  long resultOffset = 0;
+  int resultOffset = 0;
 
 
   // Error-correct and copy data blocks together into a stream of bytes
   for (size_t j = 0; j < dataBlocks.size(); j++) {
     Ref<DataBlock> dataBlock(dataBlocks[j]);
     ArrayRef<unsigned char> codewordBytes = dataBlock->getCodewords();
-    long numDataCodewords = dataBlock->getNumDataCodewords();
+    int numDataCodewords = dataBlock->getNumDataCodewords();
     correctErrors(codewordBytes, numDataCodewords);
-    for (long i = 0; i < numDataCodewords; i++) {
+    for (int i = 0; i < numDataCodewords; i++) {
       resultBytes[resultOffset++] = codewordBytes[i];
     }
   }
@@ -10504,12 +10504,12 @@ Mode Mode::FNC1_FIRST_POSITION(0, 0, 0, 0x05, "FNC1_FIRST_POSITION");
 Mode Mode::FNC1_SECOND_POSITION(0, 0, 0, 0x09, "FNC1_SECOND_POSITION");
 Mode Mode::HANZI(8, 10, 12, 0x0D, "HANZI");
 
-Mode::Mode(long cbv0_9, long cbv10_26, long cbv27, long bits, char const* name) :
+Mode::Mode(int cbv0_9, int cbv10_26, int cbv27, int bits, char const* name) :
     characterCountBitsForVersions0To9_(cbv0_9), characterCountBitsForVersions10To26_(cbv10_26),
     characterCountBitsForVersions27AndHigher_(cbv27), bits_(bits), name_(name) {
 }
 
-Mode& Mode::forBits(long bits) {
+Mode& Mode::forBits(int bits) {
     switch (bits) {
     case 0x0:
         return TERMINATOR;
@@ -10539,8 +10539,8 @@ Mode& Mode::forBits(long bits) {
     }
 }
 
-long Mode::getCharacterCountBits(Version *version) {
-  long number = version->getVersionNumber();
+int Mode::getCharacterCountBits(Version *version) {
+  int number = version->getVersionNumber();
   if (number <= 9) {
     return characterCountBitsForVersions0To9_;
   } else if (number <= 26) {
@@ -10639,7 +10639,7 @@ namespace qrcode {
 
 using namespace std;
 
-float AlignmentPatternFinder::centerFromEnd(vector<int> &stateCount, long end) {
+float AlignmentPatternFinder::centerFromEnd(vector<int> &stateCount, int end) {
   return (float)(end - stateCount[2]) - stateCount[1] / 2.0f;
 }
 
@@ -10653,14 +10653,14 @@ bool AlignmentPatternFinder::foundPatternCross(vector<int> &stateCount) {
   return true;
 }
 
-float AlignmentPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, long maxCount,
-    long originalStateCountTotal) {
-  long maxI = image_->getHeight();
+float AlignmentPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, int maxCount,
+    int originalStateCountTotal) {
+  int maxI = image_->getHeight();
   vector<int> stateCount(3, 0);
 
 
   // Start counting up from center
-  long i = startI;
+  int i = startI;
   while (i >= 0 && image_->get(centerJ, i) && stateCount[1] <= maxCount) {
     stateCount[1]++;
     i--;
@@ -10694,7 +10694,7 @@ float AlignmentPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, 
     return NAN;
   }
 
-  long stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2];
+  int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2];
   if (5 * abs(stateCountTotal - originalStateCountTotal) >= 2 * originalStateCountTotal) {
     return NAN;
   }
@@ -10703,13 +10703,13 @@ float AlignmentPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, 
 }
 
 Ref<AlignmentPattern> AlignmentPatternFinder::handlePossibleCenter(vector<int> &stateCount, size_t i, size_t j) {
-  long stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2];
+  int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2];
   float centerJ = centerFromEnd(stateCount, j);
   float centerI = crossCheckVertical(i, (int)centerJ, 2 * stateCount[1], stateCountTotal);
   if (!isnan(centerI)) {
     float estimatedModuleSize = (float)(stateCount[0] + stateCount[1] + stateCount[2]) / 3.0f;
-    long max = possibleCenters_->size();
-    for (long index = 0; index < max; index++) {
+    int max = possibleCenters_->size();
+    for (int index = 0; index < max; index++) {
       Ref<AlignmentPattern> center((*possibleCenters_)[index]);
       // Look for about the same center and module size:
       if (center->aboutEquals(estimatedModuleSize, centerI, centerJ)) {
@@ -10764,7 +10764,7 @@ Ref<AlignmentPattern> AlignmentPatternFinder::find() {
     while (j < maxJ && !image_->get(j, i)) {
       j++;
     }
-    long currentState = 0;
+    int currentState = 0;
     while (j < maxJ) {
       if (image_->get(j, i)) {
         // Black pixel
@@ -10880,9 +10880,9 @@ Ref<DetectorResult> Detector::processFinderPatternInfo(Ref<FinderPatternInfo> in
   if (moduleSize < 1.0f) {
     throw zxing::ReaderException("bad module size");
   }
-  long dimension = computeDimension(topLeft, topRight, bottomLeft, moduleSize);
+  int dimension = computeDimension(topLeft, topRight, bottomLeft, moduleSize);
   Version *provisionalVersion = Version::getProvisionalVersionForDimension(dimension);
-  long modulesBetweenFPCenters = provisionalVersion->getDimensionForVersion() - 7;
+  int modulesBetweenFPCenters = provisionalVersion->getDimensionForVersion() - 7;
 
   Ref<AlignmentPattern> alignmentPattern;
   // Anything above version 1 has an alignment pattern
@@ -10897,12 +10897,12 @@ Ref<DetectorResult> Detector::processFinderPatternInfo(Ref<FinderPatternInfo> in
     // Estimate that alignment pattern is closer by 3 modules
     // from "bottom right" to known top left location
     float correctionToTopLeft = 1.0f - 3.0f / (float)modulesBetweenFPCenters;
-    long estAlignmentX = (int)(topLeft->getX() + correctionToTopLeft * (bottomRightX - topLeft->getX()));
-    long estAlignmentY = (int)(topLeft->getY() + correctionToTopLeft * (bottomRightY - topLeft->getY()));
+    int estAlignmentX = (int)(topLeft->getX() + correctionToTopLeft * (bottomRightX - topLeft->getX()));
+    int estAlignmentY = (int)(topLeft->getY() + correctionToTopLeft * (bottomRightY - topLeft->getY()));
 
 
     // Kind of arbitrary -- expand search radius before giving up
-    for (long i = 4; i <= 16; i <<= 1) {
+    for (int i = 4; i <= 16; i <<= 1) {
       try {
         alignmentPattern = findAlignmentInRegion(moduleSize, estAlignmentX, estAlignmentY, (float)i);
         break;
@@ -10931,7 +10931,7 @@ Ref<DetectorResult> Detector::processFinderPatternInfo(Ref<FinderPatternInfo> in
 }
 
 Ref<PerspectiveTransform> Detector::createTransform(Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight, Ref <
-    ResultPolong > bottomLeft, Ref<ResultPoint> alignmentPattern, long dimension) {
+    ResultPoint > bottomLeft, Ref<ResultPoint> alignmentPattern, int dimension) {
 
   float dimMinusThree = (float)dimension - 3.5f;
   float bottomRightX;
@@ -10956,16 +10956,16 @@ Ref<PerspectiveTransform> Detector::createTransform(Ref<ResultPoint> topLeft, Re
   return transform;
 }
 
-Ref<BitMatrix> Detector::sampleGrid(Ref<BitMatrix> image, long dimension, Ref<PerspectiveTransform> transform) {
+Ref<BitMatrix> Detector::sampleGrid(Ref<BitMatrix> image, int dimension, Ref<PerspectiveTransform> transform) {
   GridSampler &sampler = GridSampler::getInstance();
   return sampler.sampleGrid(image, dimension, transform);
 }
 
-long Detector::computeDimension(Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight, Ref<ResultPoint> bottomLeft,
+int Detector::computeDimension(Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight, Ref<ResultPoint> bottomLeft,
                                float moduleSize) {
-  long tltrCentersDimension = int(FinderPatternFinder::distance(topLeft, topRight) / moduleSize + 0.5f);
-  long tlblCentersDimension = int(FinderPatternFinder::distance(topLeft, bottomLeft) / moduleSize + 0.5f);
-  long dimension = ((tltrCentersDimension + tlblCentersDimension) >> 1) + 7;
+  int tltrCentersDimension = int(FinderPatternFinder::distance(topLeft, topRight) / moduleSize + 0.5f);
+  int tlblCentersDimension = int(FinderPatternFinder::distance(topLeft, bottomLeft) / moduleSize + 0.5f);
+  int dimension = ((tltrCentersDimension + tlblCentersDimension) >> 1) + 7;
   switch (dimension & 0x03) { // mod 4
   case 0:
     dimension++;
@@ -11003,13 +11003,13 @@ float Detector::calculateModuleSizeOneWay(Ref<ResultPoint> pattern, Ref<ResultPo
   return (moduleSizeEst1 + moduleSizeEst2) / 14.0f;
 }
 
-float Detector::sizeOfBlackWhiteBlackRunBothWays(long fromX, long fromY, long toX, long toY) {
+float Detector::sizeOfBlackWhiteBlackRunBothWays(int fromX, int fromY, int toX, int toY) {
 
     float result = sizeOfBlackWhiteBlackRun(fromX, fromY, toX, toY);
 
     // Now count other way -- don't run off image though of course
     float scale = 1.0f;
-    long otherToX = fromX - (toX - fromX);
+    int otherToX = fromX - (toX - fromX);
     if (otherToX < 0) {
       scale = (float) fromX / (float) (fromX - otherToX);
       otherToX = 0;
@@ -11017,7 +11017,7 @@ float Detector::sizeOfBlackWhiteBlackRunBothWays(long fromX, long fromY, long to
       scale = (float) (image_->getWidth() - 1 - fromX) / (float) (otherToX - fromX);
       otherToX = image_->getWidth() - 1;
     }
-    long otherToY = (int) (fromY - (toY - fromY) * scale);
+    int otherToY = (int) (fromY - (toY - fromY) * scale);
 
     scale = 1.0f;
     if (otherToY < 0) {
@@ -11035,12 +11035,12 @@ float Detector::sizeOfBlackWhiteBlackRunBothWays(long fromX, long fromY, long to
     return result - 1.0f;
 }
 
-float Detector::sizeOfBlackWhiteBlackRun(long fromX, long fromY, long toX, long toY) {
+float Detector::sizeOfBlackWhiteBlackRun(int fromX, int fromY, int toX, int toY) {
     // Mild variant of Bresenham's algorithm;
     // see http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
     bool steep = abs(toY - fromY) > abs(toX - fromX);
     if (steep) {
-      long temp = fromX;
+      int temp = fromX;
       fromX = fromY;
       fromY = temp;
       temp = toX;
@@ -11048,25 +11048,25 @@ float Detector::sizeOfBlackWhiteBlackRun(long fromX, long fromY, long toX, long 
       toY = temp;
     }
 
-    long dx = abs(toX - fromX);
-    long dy = abs(toY - fromY);
-    long error = -dx >> 1;
-    long xstep = fromX < toX ? 1 : -1;
-    long ystep = fromY < toY ? 1 : -1;
+    int dx = abs(toX - fromX);
+    int dy = abs(toY - fromY);
+    int error = -dx >> 1;
+    int xstep = fromX < toX ? 1 : -1;
+    int ystep = fromY < toY ? 1 : -1;
 
     // In black pixels, looking for white, first or second time.
-    long state = 0;
+    int state = 0;
     // Loop up until x == toX, but not beyond
-    long xLimit = toX + xstep;
-    for (long x = fromX, y = fromY; x != xLimit; x += xstep) {
-      long realX = steep ? y : x;
-      long realY = steep ? x : y;
+    int xLimit = toX + xstep;
+    for (int x = fromX, y = fromY; x != xLimit; x += xstep) {
+      int realX = steep ? y : x;
+      int realY = steep ? x : y;
 
       // Does current pixel mean we have moved white to black or vice versa?
       if (!((state == 1) ^ image_->get(realX, realY))) {
         if (state == 2) {
-          long diffX = x - fromX;
-          long diffY = y - fromY;
+          int diffX = x - fromX;
+          int diffY = y - fromY;
           return (float) sqrt((double) (diffX * diffX + diffY * diffY));
         }
         state++;
@@ -11082,29 +11082,29 @@ float Detector::sizeOfBlackWhiteBlackRun(long fromX, long fromY, long toX, long 
       }
     }
     // Found black-white-black; give the benefit of the doubt that the next pixel outside the image
-    // is "white" so this last polong at (toX+xStep,toY) is the right ending. This is really a
+    // is "white" so this last point at (toX+xStep,toY) is the right ending. This is really a
     // small approximation; (toX+xStep,toY+yStep) might be really correct. Ignore this.
     if (state == 2) {
-      long diffX = toX + xstep - fromX;
-      long diffY = toY - fromY;
+      int diffX = toX + xstep - fromX;
+      int diffY = toY - fromY;
       return (float) sqrt((double) (diffX * diffX + diffY * diffY));
     }
     // else we didn't find even black-white-black; no estimate is really possible
     return NAN;
 }
 
-Ref<AlignmentPattern> Detector::findAlignmentInRegion(float overallEstModuleSize, long estAlignmentX, long estAlignmentY,
+Ref<AlignmentPattern> Detector::findAlignmentInRegion(float overallEstModuleSize, int estAlignmentX, int estAlignmentY,
     float allowanceFactor) {
   // Look for an alignment pattern (3 modules in size) around where it
   // should be
-  long allowance = (int)(allowanceFactor * overallEstModuleSize);
-  long alignmentAreaLeftX = max(0, estAlignmentX - allowance);
-  long alignmentAreaRightX = min((int)(image_->getWidth() - 1), estAlignmentX + allowance);
+  int allowance = (int)(allowanceFactor * overallEstModuleSize);
+  int alignmentAreaLeftX = max(0, estAlignmentX - allowance);
+  int alignmentAreaRightX = min((int)(image_->getWidth() - 1), estAlignmentX + allowance);
   if (alignmentAreaRightX - alignmentAreaLeftX < overallEstModuleSize * 3) {
       throw zxing::ReaderException("region too small to hold alignment pattern");
   }
-  long alignmentAreaTopY = max(0, estAlignmentY - allowance);
-  long alignmentAreaBottomY = min((int)(image_->getHeight() - 1), estAlignmentY + allowance);
+  int alignmentAreaTopY = max(0, estAlignmentY - allowance);
+  int alignmentAreaBottomY = min((int)(image_->getHeight() - 1), estAlignmentY + allowance);
   if (alignmentAreaBottomY - alignmentAreaTopY < overallEstModuleSize * 3) {
       throw zxing::ReaderException("region too small to hold alignment pattern");
   }
@@ -11151,11 +11151,11 @@ namespace zxing {
 		ResultPoint(posX,posY), estimatedModuleSize_(estimatedModuleSize), count_(1) {
 		}
 
-		FinderPattern::FinderPattern(float posX, float posY, float estimatedModuleSize, long count) :
+		FinderPattern::FinderPattern(float posX, float posY, float estimatedModuleSize, int count) :
 		ResultPoint(posX,posY), estimatedModuleSize_(estimatedModuleSize), count_(count) {
 		}
 
-		long FinderPattern::getCount() const {
+		int FinderPattern::getCount() const {
 			return count_;
 		}
 
@@ -11182,7 +11182,7 @@ namespace zxing {
     }
 
     Ref<FinderPattern> FinderPattern::combineEstimate(float i, float j, float newModuleSize) const {
-      long combinedCount = count_ + 1;
+      int combinedCount = count_ + 1;
       float combinedX = (count_ * getX() + j) / combinedCount;
       float combinedY = (count_ * getY() + i) / combinedCount;
       float combinedModuleSize = (count_ * getEstimatedModuleSize() + newModuleSize) / combinedCount;
@@ -11259,17 +11259,17 @@ public:
   }
 };
 
-long FinderPatternFinder::CENTER_QUORUM = 2;
-long FinderPatternFinder::MIN_SKIP = 3;
-long FinderPatternFinder::MAX_MODULES = 57;
+int FinderPatternFinder::CENTER_QUORUM = 2;
+int FinderPatternFinder::MIN_SKIP = 3;
+int FinderPatternFinder::MAX_MODULES = 57;
 
-float FinderPatternFinder::centerFromEnd(int* stateCount, long end) {
+float FinderPatternFinder::centerFromEnd(int* stateCount, int end) {
   return (float)(end - stateCount[4] - stateCount[3]) - stateCount[2] / 2.0f;
 }
 
 bool FinderPatternFinder::foundPatternCross(int* stateCount) {
-  long totalModuleSize = 0;
-  for (long i = 0; i < 5; i++) {
+  int totalModuleSize = 0;
+  for (int i = 0; i < 5; i++) {
     if (stateCount[i] == 0) {
       return false;
     }
@@ -11286,16 +11286,16 @@ bool FinderPatternFinder::foundPatternCross(int* stateCount) {
            moduleSize - stateCount[4]) < maxVariance;
 }
 
-float FinderPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, long maxCount, long originalStateCountTotal) {
+float FinderPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, int maxCount, int originalStateCountTotal) {
 
-  long maxI = image_->getHeight();
-  long stateCount[5];
-  for (long i = 0; i < 5; i++)
+  int maxI = image_->getHeight();
+  int stateCount[5];
+  for (int i = 0; i < 5; i++)
     stateCount[i] = 0;
 
 
   // Start counting up from center
-  long i = startI;
+  int i = startI;
   while (i >= 0 && image_->get(centerJ, i)) {
     stateCount[2]++;
     i--;
@@ -11345,7 +11345,7 @@ float FinderPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, lon
 
   // If we found a finder-pattern-like section, but its size is more than 40% different than
   // the original, assume it's a false positive
-  long stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
+  int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
   if (5 * abs(stateCountTotal - originalStateCountTotal) >= 2 * originalStateCountTotal) {
     return NAN;
   }
@@ -11353,15 +11353,15 @@ float FinderPatternFinder::crossCheckVertical(size_t startI, size_t centerJ, lon
   return foundPatternCross(stateCount) ? centerFromEnd(stateCount, i) : NAN;
 }
 
-float FinderPatternFinder::crossCheckHorizontal(size_t startJ, size_t centerI, long maxCount,
-    long originalStateCountTotal) {
+float FinderPatternFinder::crossCheckHorizontal(size_t startJ, size_t centerI, int maxCount,
+    int originalStateCountTotal) {
 
-  long maxJ = image_->getWidth();
-  long stateCount[5];
-  for (long i = 0; i < 5; i++)
+  int maxJ = image_->getWidth();
+  int stateCount[5];
+  for (int i = 0; i < 5; i++)
     stateCount[i] = 0;
 
-  long j = startJ;
+  int j = startJ;
   while (j >= 0 && image_->get(j, centerI)) {
     stateCount[2]++;
     j--;
@@ -11409,7 +11409,7 @@ float FinderPatternFinder::crossCheckHorizontal(size_t startJ, size_t centerI, l
 
   // If we found a finder-pattern-like section, but its size is significantly different than
   // the original, assume it's a false positive
-  long stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
+  int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
   if (5 * abs(stateCountTotal - originalStateCountTotal) >= originalStateCountTotal) {
     return NAN;
   }
@@ -11418,7 +11418,7 @@ float FinderPatternFinder::crossCheckHorizontal(size_t startJ, size_t centerI, l
 }
 
 bool FinderPatternFinder::handlePossibleCenter(int* stateCount, size_t i, size_t j) {
-  long stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
+  int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
   float centerJ = centerFromEnd(stateCount, j);
   float centerI = crossCheckVertical(i, (size_t)centerJ, stateCount[2], stateCountTotal);
   if (!isnan(centerI)) {
@@ -11450,7 +11450,7 @@ bool FinderPatternFinder::handlePossibleCenter(int* stateCount, size_t i, size_t
   return false;
 }
 
-long FinderPatternFinder::findRowSkip() {
+int FinderPatternFinder::findRowSkip() {
   size_t max = possibleCenters_.size();
   if (max <= 1) {
     return 0;
@@ -11477,7 +11477,7 @@ long FinderPatternFinder::findRowSkip() {
 }
 
 bool FinderPatternFinder::haveMultiplyConfirmedCenters() {
-  long confirmedCount = 0;
+  int confirmedCount = 0;
   float totalModuleSize = 0.0f;
   size_t max = possibleCenters_.size();
   for (size_t i = 0; i < max; i++) {
@@ -11622,7 +11622,7 @@ Ref<FinderPatternInfo> FinderPatternFinder::find(DecodeHints const& hints) {
   // 1:1:3:1:1 ratio; this tracks the number of such modules seen so far
 
   // As this is used often, we use an integer array instead of vector
-  long stateCount[5];
+  int stateCount[5];
   bool done = false;
 
 
@@ -11631,7 +11631,7 @@ Ref<FinderPatternInfo> FinderPatternFinder::find(DecodeHints const& hints) {
   // modules in size. This gives the smallest number of pixels the center
   // could be, so skip this often. When trying harder, look for all
   // QR versions regardless of how dense they are.
-  long iSkip = (3 * maxI) / (4 * MAX_MODULES);
+  int iSkip = (3 * maxI) / (4 * MAX_MODULES);
   if (iSkip < MIN_SKIP || tryHarder) {
       iSkip = MIN_SKIP;
   }
@@ -11647,7 +11647,7 @@ Ref<FinderPatternInfo> FinderPatternFinder::find(DecodeHints const& hints) {
     stateCount[2] = 0;
     stateCount[3] = 0;
     stateCount[4] = 0;
-    long currentState = 0;
+    int currentState = 0;
     for (size_t j = 0; j < maxJ; j++) {
       if (matrix.get(j, i)) {
         // Black pixel
@@ -11667,7 +11667,7 @@ Ref<FinderPatternInfo> FinderPatternFinder::find(DecodeHints const& hints) {
                 if (hasSkipped_) {
                   done = haveMultiplyConfirmedCenters();
                 } else {
-                  long rowSkip = findRowSkip();
+                  int rowSkip = findRowSkip();
                   if (rowSkip > stateCount[2]) {
                     // Skip rows between row of lower confirmed center
                     // and top of presumed third confirmed center
@@ -11809,29 +11809,29 @@ namespace zxing {
 namespace qrcode {
 
 static const float patternEdgeThreshold = 2;
-static const long patternEdgeWidth = 3;
+static const int patternEdgeWidth = 3;
 static const float patternEdgeSearchRatio = 1.1;
-static const long patternEdgeSkip = 2;
+static const int patternEdgeSkip = 2;
 
 static const float accurateEdgeThreshold = 3.3;
-static const long accurateEdgeWidth = 7;
-static const long accurateEdgeSkip = 2;
+static const int accurateEdgeWidth = 7;
+static const int accurateEdgeSkip = 2;
 
-static Polong guessLastPattern(Polong topLeft, Polong topRight, Polong bottomLeft) {
+static Point guessLastPattern(Point topLeft, Point topRight, Point bottomLeft) {
   return Point(topRight.x - topLeft.x + bottomLeft.x, topRight.y - topLeft.y + bottomLeft.y);
 }
 
-static Polong rp(Ref<ResultPoint> rp) {
+static Point rp(Ref<ResultPoint> rp) {
   return Point(rp->getX(), rp->getY());
 }
 
 QREdgeDetector::QREdgeDetector(Ref<BitMatrix> image) : Detector(image) { }
 
 Ref<PerspectiveTransform> QREdgeDetector::createTransform(Ref<ResultPoint> topLeft, Ref<ResultPoint> topRight, Ref <
-      ResultPolong > bottomLeft, Ref<ResultPoint> alignmentPattern, long dimension) {
+      ResultPoint > bottomLeft, Ref<ResultPoint> alignmentPattern, int dimension) {
 
   if(alignmentPattern == NULL) {
-    Polong corner = findCorner(*Detector::getImage(), rp(topLeft), rp(topRight), rp(bottomLeft), dimension);
+    Point corner = findCorner(*Detector::getImage(), rp(topLeft), rp(topRight), rp(bottomLeft), dimension);
     return get1CornerTransform(rp(topLeft), rp(topRight), rp(bottomLeft), corner, dimension);
   } else {
     return Detector::createTransform(topLeft, topRight, bottomLeft, alignmentPattern, dimension);
@@ -11841,9 +11841,9 @@ Ref<PerspectiveTransform> QREdgeDetector::createTransform(Ref<ResultPoint> topLe
 
 
 
-Polong QREdgeDetector::findCorner(const BitMatrix& image, Polong topLeft, Polong topRight, Polong bottomLeft, long dimension) {
+Point QREdgeDetector::findCorner(const BitMatrix& image, Point topLeft, Point topRight, Point bottomLeft, int dimension) {
   (void)dimension;
-  Polong bottomRight = guessLastPattern(topLeft, topRight, bottomLeft);
+  Point bottomRight = guessLastPattern(topLeft, topRight, bottomLeft);
 
   Line bottomEst = findPatternEdge(image, bottomLeft, topLeft, bottomRight, false);
   Line rightEst = findPatternEdge(image, topRight, topLeft, bottomRight, true);
@@ -11857,8 +11857,8 @@ Polong QREdgeDetector::findCorner(const BitMatrix& image, Polong topLeft, Polong
   return EdgeDetector::intersection(bottom, right);
 }
 
-Line QREdgeDetector::findPatternEdge(const BitMatrix& image, Polong pattern, Polong opposite, Polong direction, bool invert) {
-  Polong start = endOfReverseBlackWhiteBlackRun(image, pattern, opposite);
+Line QREdgeDetector::findPatternEdge(const BitMatrix& image, Point pattern, Point opposite, Point direction, bool invert) {
+  Point start = endOfReverseBlackWhiteBlackRun(image, pattern, opposite);
 
   float dx = pattern.x - start.x;
   float dy = pattern.y - start.y;
@@ -11872,14 +11872,14 @@ Line QREdgeDetector::findPatternEdge(const BitMatrix& image, Polong pattern, Pol
   float ny = dirY/dirSize;
 
   float search = dist * patternEdgeSearchRatio;
-  Polong a(start.x + nx*search, start.y + ny*search);
-  Polong b(start.x - nx*search, start.y - ny*search);
+  Point a(start.x + nx*search, start.y + ny*search);
+  Point b(start.x - nx*search, start.y - ny*search);
 
   return EdgeDetector::findLine(image, Line(a, b), invert, patternEdgeWidth, patternEdgeThreshold, patternEdgeSkip);
 }
 
 
-Ref<PerspectiveTransform> QREdgeDetector::get1CornerTransform(Polong topLeft, Polong topRight, Polong bottomLeft, Polong corner, long dimension) {
+Ref<PerspectiveTransform> QREdgeDetector::get1CornerTransform(Point topLeft, Point topRight, Point bottomLeft, Point corner, int dimension) {
   float dimMinusThree = (float) dimension - 3.5f;
 
   Ref<PerspectiveTransform> transform(PerspectiveTransform::quadrilateralToQuadrilateral(3.5f, 3.5f, dimMinusThree, 3.5f, dimension,
@@ -11890,15 +11890,15 @@ Ref<PerspectiveTransform> QREdgeDetector::get1CornerTransform(Polong topLeft, Po
 }
 
 // Adapted from "sizeOfBlackWhiteBlackRun" in zxing::qrcode::Detector
-Polong QREdgeDetector::endOfReverseBlackWhiteBlackRun(const BitMatrix& image, Polong from, Polong to) {
-  long fromX = (int)from.x;
-  long fromY = (int)from.y;
-  long toX = (int)to.x;
-  long toY = (int)to.y;
+Point QREdgeDetector::endOfReverseBlackWhiteBlackRun(const BitMatrix& image, Point from, Point to) {
+  int fromX = (int)from.x;
+  int fromY = (int)from.y;
+  int toX = (int)to.x;
+  int toY = (int)to.y;
 
   bool steep = abs(toY - fromY) > abs(toX - fromX);
   if (steep) {
-    long temp = fromX;
+    int temp = fromX;
     fromX = fromY;
     fromY = temp;
     temp = toX;
@@ -11906,17 +11906,17 @@ Polong QREdgeDetector::endOfReverseBlackWhiteBlackRun(const BitMatrix& image, Po
     toY = temp;
   }
 
-  long dx = abs(toX - fromX);
-  long dy = abs(toY - fromY);
-  long error = -dx >> 1;
-  long ystep = fromY < toY ? -1 : 1;
-  long xstep = fromX < toX ? -1 : 1;
-  long state = 0; // In black pixels, looking for white, first or second time
+  int dx = abs(toX - fromX);
+  int dy = abs(toY - fromY);
+  int error = -dx >> 1;
+  int ystep = fromY < toY ? -1 : 1;
+  int xstep = fromX < toX ? -1 : 1;
+  int state = 0; // In black pixels, looking for white, first or second time
 
   // In case there are no points, prepopulate to from
-  long realX = fromX;
-  long realY = fromY;
-  for (long x = fromX, y = fromY; x != toX; x += xstep) {
+  int realX = fromX;
+  int realY = fromY;
+  for (int x = fromX, y = fromY; x != toX; x += xstep) {
     realX = steep ? y : x;
     realY = steep ? x : y;
 
@@ -11943,7 +11943,7 @@ Polong QREdgeDetector::endOfReverseBlackWhiteBlackRun(const BitMatrix& image, Po
     }
   }
 
-  // B-W-B run not found, return the last polong visited.
+  // B-W-B run not found, return the last point visited.
   return Point(realX, realY);
 }
 
