@@ -487,13 +487,8 @@ namespace zxing {
     readers_.clear();
     bool tryHarder = hints.getTryHarder();
 
-    bool addOneDReader = hints.containsFormat(BarcodeFormat_UPC_E) ||
-                         hints.containsFormat(BarcodeFormat_UPC_A) ||
-                         hints.containsFormat(BarcodeFormat_EAN_8) ||
-                         hints.containsFormat(BarcodeFormat_EAN_13) ||
-                         hints.containsFormat(BarcodeFormat_CODE_128) ||
-                         hints.containsFormat(BarcodeFormat_CODE_39) ||
-                         hints.containsFormat(BarcodeFormat_ITF);
+    bool addOneDReader = hints.containsFormat(BarcodeFormat_UPC_A) 
+          );
     if (addOneDReader && !tryHarder) {
       readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
     }
